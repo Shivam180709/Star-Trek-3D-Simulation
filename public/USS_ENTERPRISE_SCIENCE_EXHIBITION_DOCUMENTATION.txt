@@ -1,0 +1,1208 @@
+================================================================================
+          USS ENTERPRISE (NCC-1701) 3D ASTROMETRICS, BRIDGE COMMAND
+                 & DEEP-SPACE ASTROPHYSICS SIMULATION SYSTEM
+================================================================================
+             COMPREHENSIVE SCIENCE EXHIBITION & TECHNICAL MANUAL
+          (For General Visitors, Science Evaluators & Technical Judges)
+================================================================================
+
+DOCUMENT OVERVIEW
+-----------------
+This document is the complete, authoritative manual for the "USS Enterprise
+(NCC-1701) 3D Astrometrics, Bridge Command & Deep-Space Astrophysics Simulation".
+It is специально structured into two complementary layers:
+  1. AN ACCESSIBLE OVERVIEW (Parts 1, 4, 5, 6, 7, and 8A) written for exhibition
+     visitors, students, teachers, and Star Trek enthusiasts who want to
+     understand what the simulation does, how to fly the starship, how the
+     missions work, and what real-world science it teaches.
+  2. A DEEP TECHNICAL & MATHEMATICAL SPECIFICATION (Parts 2, 3, and 8B/8C)
+     written for software engineers, computer-science judges, and physics
+     evaluators who want to inspect the programming languages, frameworks,
+     WebGL/Three.js 3D architecture, custom GLSL shaders, procedural textures,
+     and exact kinematic mathematics powering the simulation.
+
+================================================================================
+                        TABLE OF CONTENTS
+================================================================================
+PART 1: EXECUTIVE OVERVIEW & SCIENCE EXHIBITION PURPOSE
+  1.1 What Is This Project?
+  1.2 Why Star Trek in a Science Exhibition? (Sci-Fi Meets Real Astrophysics)
+  1.3 About Star Trek, the USS Enterprise (NCC-1701) & LCARS Philosophy
+
+PART 2: COMPLETE SOFTWARE ARCHITECTURE & PROGRAMMING STACK (TECHNICAL)
+  2.1 Programming Languages Used
+  2.2 Frameworks, Libraries & Build Tooling
+  2.3 3D WebGL Rendering & Procedural Graphics Architecture (Three.js)
+  2.4 Real-Time React <-> Three.js State Bridge (60 FPS Architecture)
+  2.5 Procedural Web Audio & Computer Voice Synthesis Engine
+  2.6 Complete Directory & File-by-File Codebase Reference
+
+PART 3: MATHEMATICAL & ASTROPHYSICAL ENGINE
+  3.1 Astronomical Distance Scale Calibration (AU, km, Scene Units)
+  3.2 Speed (c and km/s) vs. Distance (AU and Light-Years)
+  3.3 Exact Kinematic Synchronization (Why Delta-d / Delta-t = Velocity)
+  3.4 Canonical Star Trek Warp Factor Equations (TNG Okuda & TOS Scales)
+  3.5 Collision Avoidance & Safe Standoff Vector Mathematics
+
+PART 4: COMPLETE FLIGHT CONTROLS, KEYBOARD SHORTCUTS & MOUSE MANUAL
+  4.1 Attitude & 3D Flight Steering Controls
+  4.2 Propulsion, Impulse Throttle & Warp Drive Shortcuts
+  4.3 Tactical Combat, Weapons, Shields & Alert Shortcuts
+  4.4 Consoles, Astrometric Maps, Audio & Database Shortcuts
+  4.5 Camera Perspectives & 3D Bridge Interior Station Controls
+
+PART 5: HEADS-UP DISPLAYS (HUDs), 3D BRIDGE INTERIOR & LCARS CONSOLES
+  5.1 Top LCARS Command & Alert Header Bar
+  5.2 In-Flight Telemetry, Velocity Readout & Tactical Ordnance HUD
+  5.3 Interactive 3D USS Enterprise Bridge Interior & First-Person Crew POVs
+  5.4 Real-Time Tactical Astrometric Radar Scanner (AU Scaled)
+  5.5 Bottom LCARS Helm, Propulsion & Ordnance Control Deck
+  5.6 Planetary Spectroscopy & Habitability Sensor Laboratory
+  5.7 360-Degree Ship Subsystem & Deck-by-Deck Inspection Console
+  5.8 Deep-Space Spacedock Operations & Automated Repair Drone Swarms
+  5.9 Star Trek Exobiology & Alien Species Database
+  5.10 Astrometric Object Dossier ("Know More" Encyclopedia Modal)
+
+PART 6: ASTROMETRICS STAR MAPS, 30 SOLAR SYSTEMS & SINGULARITY TRANSIT
+  6.1 Galactic Cartography Across All Four Quadrants (Alpha, Beta, Gamma, Delta)
+  6.2 Complete Catalog of All 30 Star Systems, Nebulae & Spacedocks
+  6.3 Relativistic Kerr Black Hole (Sol) to White Hole (Qo'noS) Transit
+
+PART 7: STARFLEET MISSIONS, REAL SCIENCE WORKSTATIONS & OFFICER PROFILES
+  7.1 Archetype 1: First Contact & Xenolinguistic Diplomacy (Game Theory & SETI)
+  7.2 Archetype 2: Astrophysical Anomaly Investigation (Quantum Spectroscopy)
+  7.3 Archetype 3: Planetary Defense & Tactical Fleet Escort
+  7.4 Archetype 4: Planetary Magnetosphere & Ionospheric Rescue (MHD Physics)
+  7.5 Mission Grading (S to D), Adaptive AI Difficulty & Starfleet Ranks
+  7.6 6-Digit Science Exhibition Officer Profile Code System
+
+PART 8: SCIENCE EXHIBITION PRESENTATION GUIDE & COMPREHENSIVE Q&A (35+ Q&As)
+  8.1 3-Minute Live Demonstration Script for Exhibition Booth Presenters
+  8.2 Section A: General & Visitor Questions (Students, Parents, Public)
+  8.3 Section B: Physics, Astronomy & Space Science Questions (Science Judges)
+  8.4 Section C: Programming, 3D Graphics & Architecture Questions (Tech Judges)
+
+
+================================================================================
+PART 1: EXECUTIVE OVERVIEW & SCIENCE EXHIBITION PURPOSE
+================================================================================
+
+1.1 WHAT IS THIS PROJECT?
+-------------------------
+The USS Enterprise (NCC-1701) 3D Simulation is a real-time, interactive 3D
+spaceflight, bridge-command, and astrophysical laboratory web application running
+directly in the browser at 60 frames per second (FPS).
+
+Unlike static planetarium viewers or pre-rendered videos, this software builds an
+entire living galaxy in three-dimensional space using procedural geometry,
+physically based rendering (PBR), custom GPU shaders, and real NASA/planetary
+maps. Users step into the role of Captain and Bridge Crew of the legendary
+Constitution-class starship USS Enterprise (NCC-1701). From either an external
+3D Chase/Orbit camera or an interactive First-Person 3D Bridge Interior, users
+can:
+  * Pilot the Enterprise across 30 canonical Star Systems spanning the Alpha,
+    Beta, Gamma, and Delta Quadrants.
+  * Experience realistic Astronomical Unit (AU) planetary distances and
+    mathematically synchronized velocities in kilometers per second (km/s) and
+    multiples of the speed of light (c).
+  * Switch seamlessly between 5 Bridge Crew Stations (Captain's Chair, Helm &
+    Navigation, Tactical & Weapons, Science & Astrometrics, Communications &
+    Engineering) inside a 3D multi-tiered bridge arena.
+  * Conduct real-world astrophysical experiments—including Fraunhofer/Balmer
+    atomic spectroscopy, magnetohydrodynamic (MHD) planetary core restoration,
+    and radio-astronomy First Contact frequency calibration.
+  * Engage in tactical starship defense against hostile Klingon, Romulan,
+    Cardassian, Gorn, Tholian, and Borg vessels, then dock at monumental
+    Deep-Space Spacedocks for automated drone hull repairs and antimatter
+    refueling.
+
+1.2 WHY STAR TREK IN A SCIENCE EXHIBITION? (SCI-FI MEETS REAL ASTROPHYSICS)
+---------------------------------------------------------------------------
+Since its debut in 1966, Star Trek has inspired generations of NASA engineers,
+astrophysicists, and computer scientists—from the invention of the flip phone
+and tablet computer to real theoretical physics research such as the Alcubierre
+Warp Metric (1994).
+
+In a science exhibition setting, abstract physics equations (like the Rydberg
+formula for hydrogen emission lines, the Lorentz force in planetary magnetic
+fields, or relativistic Schwarzschild event horizons) can feel intimidating on a
+poster board. This simulation transforms those exact equations into hands-on,
+interactive starship instruments:
+  1. KINEMATICS & ASTRONOMICAL SCALES: Visitors immediately grasp the difference
+     between speed (multiples of light speed 'c' and 'km/s') and astronomical
+     distance ('AU' and 'Light-Years') by watching the ship's real-time velocity
+     vector directly drive the rate of change of distance (Delta-d / Delta-t) on
+     the Tactical Radar.
+  2. QUANTUM SPECTROSCOPY: Visitors tune a virtual grating spectrometer to match
+     real Balmer H-Alpha (656.28 nm), Doubly Ionized Oxygen [O III] (500.7 nm),
+     Ionized Helium He-II (468.6 nm), and Iron K-Shell X-Ray (185.0 nm) lines.
+  3. MAGNETOHYDRODYNAMICS (MHD): Visitors calculate cyclotron resonance and
+     Lorentz force deflection to save a planet's atmosphere from a Coronal Mass
+     Ejection (CME) or Geodynamo collapse—learning why Earth has auroras and why
+     Mars lost its ancient atmosphere.
+  4. RADIO ASTRONOMY & GAME THEORY: Visitors align subspace transceivers to the
+     real Neutral Hydrogen 21-cm hyperfine line (1420.4 MHz) and apply Nash
+     Bargaining and Stag-Hunt game theory during First Contact diplomacy.
+
+1.3 ABOUT STAR TREK, THE USS ENTERPRISE (NCC-1701) & LCARS PHILOSOPHY
+---------------------------------------------------------------------
+  * THE USS ENTERPRISE (NCC-1701): A Constitution-class heavy cruiser serving as
+    the flagship of the United Federation of Planets. Its iconic silhouette
+    consists of:
+      - A primary circular Saucer Section (housing the Main Bridge on Deck 1,
+        crew quarters, impulse engines, and phaser emitter banks).
+      - A secondary Engineering Hull (housing the matter/antimatter warp core,
+        shuttlebay, and main parabolic navigational deflector dish).
+      - Twin cylindrical Warp Nacelles mounted on swept pylons, featuring glowing
+        Bussard ramscoop collectors at the front and subspace warp field grilles
+        along the sides.
+  * LCARS INTERFACE (Library Computer Access/Retrieval System): The iconic
+    Starfleet graphical user interface designed with high-contrast dark
+    backgrounds, amber/gold, cyan/sky-blue, emerald, and alert-red status
+    readouts, monospaced telemetry numerals, and ergonomic tactical panels.
+  * THE PRIME DIRECTIVE & STARFLEET MISSION: "To explore strange new worlds; to
+    seek out new life and new civilizations; to boldly go where no one has gone
+    before."
+
+
+================================================================================
+PART 2: COMPLETE SOFTWARE ARCHITECTURE & PROGRAMMING STACK (TECHNICAL)
+================================================================================
+
+2.1 PROGRAMMING LANGUAGES USED
+------------------------------
+1. TypeScript (v7.0 / ESNext JavaScript Superset):
+   - 100% of the application logic, 3D simulation engine, astrophysical data
+     models, and user interface components are written in strict TypeScript
+     (`.ts` and `.tsx`).
+   - Provides compile-time static type checking for 3D vectors, quaternion
+     rotations, starship telemetry packets (`ShipState`), solar system catalogs
+     (`SolarSystem`, `PlanetData`), and mission evaluation metrics.
+2. GLSL (OpenGL Shading Language):
+   - Used inside `/src/three/subspaceDistortionShader.ts` and custom Three.js
+     shader materials to execute per-vertex and per-pixel GPU calculations for
+     subspace warp field distortion, atmospheric Fresnel rim lighting, and
+     relativistic black hole accretion lensing.
+3. HTML5 & CSS3 (with Tailwind CSS v4.3):
+   - Used for the responsive viewport container, custom `@font-face` / monospace
+     telemetry typography, glassmorphism HUD overlays (`backdrop-blur`), and
+     hardware-accelerated CSS animations.
+
+2.2 FRAMEWORKS, LIBRARIES & BUILD TOOLING
+-----------------------------------------
+  * React 19 (`react` & `react-dom` v19.0.1):
+    Powers the reactive Heads-Up Display (HUD) layer, modal laboratories,
+    interactive sliders, and real-time telemetry readouts using functional
+    components and React Hooks (`useState`, `useEffect`, `useRef`, `useMemo`,
+    `useCallback`).
+  * Three.js (`three` v0.186.1):
+    The core 3D WebGL rendering engine responsible for scene graphs, cameras,
+    PBR lighting, procedural starship/bridge/planet geometry, raycasting,
+    particle explosions, and warp streak effects.
+  * Vite (`vite` v8.3.0 & `@vitejs/plugin-react`):
+    Next-generation frontend build tool and development server running on Port
+    3000, bundling ES modules with near-instant compilation.
+  * Tailwind CSS (`tailwindcss` v4.3.3 & `@tailwindcss/vite`):
+    Utility-first CSS framework styling all LCARS panels, responsive HUD grids,
+    and interactive bridge station overlays.
+  * Lucide React (`lucide-react` v0.546.0):
+    Crisp vector iconography for tactical reticles, radar toggles, shield
+    indicators, spectrometer tools, and navigation controls.
+  * SAM-JS (`sam-js` v0.3.1):
+    Software Automatic Mouth phoneme-based speech synthesizer, paired with the
+    browser's native Web Speech API (`window.speechSynthesis`) to generate the
+    authentic USS Enterprise Duotronic Computer Voice.
+
+2.3 3D WEBGL RENDERING & PROCEDURAL GRAPHICS ARCHITECTURE (THREE.JS)
+--------------------------------------------------------------------
+A major engineering highlight of this project—especially important for technical
+judges—is that the entire 3D universe runs at 60 FPS with ZERO heavy external
+`.gltf` or `.obj` 3D model downloads that could fail or lag on exhibition Wi-Fi.
+Every 3D structure is constructed mathematically in code:
+
+1. Procedural USS Enterprise Exterior (`src/three/shipModel.ts`):
+   - Built from hierarchical `THREE.Group` nodes combining high-segment
+     `CylinderGeometry`, `SphereGeometry`, `TorusGeometry`, `BoxGeometry`, and
+     `ConeGeometry`.
+   - Includes the Saucer Section (with Upper/Lower Sensor Domes, Bridge Module,
+     lit perimeter viewport windows, and registry hull plating), Engineering
+     Secondary Hull, Parabolic Navigational Deflector Dish (with multi-ring
+     glowing copper/cyan emitters), interconnected Neck & Nacelle Pylons, and
+     Twin Warp Nacelles with animated Bussard Ramscoops.
+   - Features 14 inspectable 3D subsystem nodes (`focusSubsystem`) so the camera
+     can orbit any specific deck or component.
+
+2. Procedural 3D USS Enterprise Bridge Interior (`src/three/bridgeInterior.ts`):
+   - Constructed as a 12-sided radial circular arena with a sunken central
+     command pit (`#2b2f36` matte flooring), metallic-silver outer bulkheads
+     (`#8a95a5`, `metalness: 0.6`, `roughness: 0.35`), segmented red-orange
+     safety railings (`#d9532f`), and a rear-right Turbolift Alcove with double
+     doors.
+   - Center Command Pedestal: Houses the Captain's Chair with angled metallic
+     armrests containing interactive 3D glowing buttons and throttle sliders.
+   - Forward Helm & Navigation Island: T-shaped dual console with two swivel
+     chairs and sloped control surfaces packed with 3D micro-buttons and dials.
+   - Perimeter Consoles & Dynamic Live Video Monitors: Continuous curved outer
+     desks (Tactical, Science, Communications, Engineering) topped by angled
+     upper bulkhead screens powered by live HTML5 `<canvas>` elements mapped to
+     `THREE.CanvasTexture` (rendering animated sine-wave spectroscopes, shield
+     harmonics, star charts, and subspace waveforms in real time).
+   - Panoramic Main Viewscreen: Renders the live 3D outer-space universe (planets,
+     stars, nebulae, and enemy ships) directly through the forward viewport frame
+     with zoom capability (`1.0x` to `8.0x`) and target lock pinpointing.
+   - Procedural Articulated Bridge Crew Officers: Built from hierarchical
+     primitives (`SphereGeometry`, `CapsuleGeometry`, `CylinderGeometry`) dressed
+     in authentic Starfleet division uniforms (Command Gold, Science/Medical
+     Blue, Operations/Engineering Red) with realistic skin tones, facial
+     features, hair, Starfleet delta insignia badges, and continuous idle
+     breathing/head-turning animations. When the player switches into a specific
+     station's First-Person POV, that seat's crew member automatically hides so
+     the camera has an unobstructed view of the 3D controls and Main Viewscreen.
+
+3. Hybrid Real-NASA + Procedural Planetary Texture Engine (`src/three/solarSystems.ts`):
+   - Sol System bodies (Sun, Mercury, Venus, Earth, Moon, Mars, Jupiter, Saturn,
+     Uranus, Neptune) utilize real 2K equirectangular planetary maps stored in
+     `/public/assets/planets/` blended onto high-resolution `2048x1024`
+     `THREE.CanvasTexture` buffers with procedural bump maps, atmospheric Fresnel
+     glow shells, and concentric ring textures (including Saturn's Cassini
+     Division and Encke Gap).
+   - Exoplanets across the other 29 Star Trek systems are generated deterministically
+     using a multi-octave trigonometric hash function (`fractHash`) that paints
+     continents, ocean basins, volcanic lava rifts, ice caps, and gas-giant
+     cyclonic bands into cached `CanvasTexture` instances (`textureCache`,
+     `bumpTextureCache`, `starTextureCache`, `ringTextureCache`).
+
+4. Deep-Space Spacedocks & Hostile Fleets (`src/three/starbaseModels.ts`, `src/three/enemyShips.ts`):
+   - Monumental mushroom-shaped Starfleet Spacedocks, Nor-class Deep Space 9
+     outposts (with concentric habitat rings and docking pylons), and autonomous
+     orbital repair drones with glowing welding lasers.
+   - Distinct 3D enemy ship geometries for Klingon Birds-of-Prey & Negh'Var
+     flagships, Romulan Warbirds & Scimitar dreadnoughts, Cardassian Galor
+     cruisers, Borg Cubes & Spheres, Gorn Dominators, and Tholian Web Spinners.
+
+2.4 REAL-TIME REACT <-> THREE.JS STATE BRIDGE (60 FPS ARCHITECTURE)
+-------------------------------------------------------------------
+A common pitfall in React + Three.js apps is triggering React re-renders 60 times
+per second on every `requestAnimationFrame` tick, which causes UI lag. This
+application solves that with a decoupled two-tier architecture:
+  1. The Three.js `SimulationEngine` (`src/three/simulationEngine.ts`) runs an
+     uninterrupted `requestAnimationFrame` loop at 60+ FPS, updating 3D physics,
+     quaternions, particle systems, phaser beams, torpedo trajectories, and
+     bridge canvas monitors directly on the WebGL canvas.
+  2. Telemetry snapshots (`ShipState`) are broadcast to React via a throttled
+     callback (`broadcastState`), while heavy astrometric distance lists update
+     on a 600ms interval. This keeps the 3D viewport silky-smooth while React
+     HUD numbers remain responsive and accurate.
+
+2.5 PROCEDURAL WEB AUDIO & COMPUTER VOICE SYNTHESIS ENGINE
+----------------------------------------------------------
+  * Sound Effects (`src/audio/soundEffects.ts`): Uses the browser's native
+    `AudioContext` (Web Audio API) to synthesize phaser beam sizzles, photon
+    torpedo dispersion bursts, warp core hums, Red Alert klaxons, and LCARS
+    buttonchirps mathematically using oscillators (`sawtooth`, `sine`, `square`,
+    `triangle`), biquad filters, and gain envelopes—requiring zero external `.mp3`
+    files for sound effects.
+  * Computer Voice (`src/audio/computerVoice.ts`): Combines Web Speech API voice
+    synthesis and `sam-js` formant synthesis to announce tactical alerts ("Red
+    Alert", "Warp drive engaged", "Target locked", "Docking clamps engaged")
+    accompanied by a live animated equalizer banner at the top of the screen.
+  * Battle Theme Manager (`src/audio/battleThemeManager.ts`): Automatically
+    triggers the orchestral Star Trek battle soundtrack (cued to 0:38/0:40) when
+    hostile combat waves begin and fades out when combat ends.
+
+2.6 COMPLETE DIRECTORY & FILE-BY-FILE CODEBASE REFERENCE
+--------------------------------------------------------
+  /index.html                              -> HTML5 entry point & viewport setup
+  /package.json                            -> Dependencies & scripts
+  /vite.config.ts                          -> Vite bundler & Tailwind v4 plugin
+  /src/main.tsx                            -> React 19 DOM root mount
+  /src/App.tsx                             -> Top-level state orchestrator & hotkeys
+  /src/types/simulation.ts                 -> All TypeScript interfaces & data types
+  /src/utils/scaleFormatters.ts            -> Astronomical scale (AU, km/s, c) math
+  /src/three/
+    ├── simulationEngine.ts                -> Core 3D physics, camera, combat & AI loop
+    ├── shipModel.ts                       -> Procedural USS Enterprise 3D mesh builder
+    ├── bridgeInterior.ts                  -> 3D Enterprise Bridge, consoles & crew
+    ├── solarSystems.ts                    -> 30 Star Systems & 2K planet texture engine
+    ├── spaceScene.ts                      -> Starfield, nebulae & lighting setup
+    ├── starbaseModels.ts                  -> Spacedocks, DS9 & repair drone 3D models
+    ├── enemyShips.ts                      -> Klingon, Romulan, Borg, Cardassian 3D ships
+    ├── warpEffect.ts                      -> Warp star-streak cylinder & flash effects
+    ├── subspaceDistortionShader.ts        -> Custom GLSL shader for warp bubble
+    ├── subspaceParticleStreaks.ts         -> Relativistic dust & tachyon particle streaks
+    ├── particleExplosion.ts               -> Volumetric 3D ship/torpedo explosions
+    └── navPathGuide.ts                    -> 3D holographic course-plotting chevrons
+  /src/components/
+    ├── LCARSHeader.tsx                    -> Top telemetry bar, alerts & modal toggles
+    ├── FlightHUD.tsx                      -> Velocity (km/s), target HUD & station ops
+    ├── BridgeCommandHUD.tsx               -> 3D Bridge Interior station switcher & controls
+    ├── TacticalRadar.tsx                  -> 2D/3D Astrometric Radar (AU rings)
+    ├── LCARSControls.tsx                  -> Bottom helm, warp, phaser & torpedo deck
+    ├── NavigationConsole.tsx              -> Quick course plotter & warp calculator
+    ├── StarSystemMapModal.tsx             -> Full-screen 4-Quadrant & Orbital Map
+    ├── PlanetaryScannerModal.tsx          -> Spectroscopy & habitability lab modal
+    ├── ShipInspectionModal.tsx            -> 3D subsystem & deck inspection drawer
+    ├── SensorScanner.tsx                  -> Long-range target list & autopilot drawer
+    ├── SpeciesDatabaseModal.tsx           -> Exobiology & alien civilization encyclopedia
+    ├── LCARSObjectDetailModal.tsx         -> Detailed dossier for any star/planet/ship
+    ├── TacticalLogConsole.tsx             -> Timestamped stardate combat & flight log
+    ├── ControlsHelpModal.tsx              -> Interactive keyboard & flight manual
+    ├── EnterpriseDestructionModal.tsx     -> Hull breach debrief & wave retry screen
+    ├── LCARSBattleThemeWidget.tsx         -> Combat soundtrack controller
+    └── LCARSVoiceSettingsModal.tsx        -> Computer voice synthesizer configuration
+  /src/data/
+    ├── starfleetMissionsData.ts           -> 4 Mission archetypes, physics & grading
+    ├── celestialObjectDatabase.ts         -> Encyclopedia data for planets & anomalies
+    ├── planetaryScienceData.ts            -> Atmospheric & spectroscopic composition data
+    └── speciesDatabase.ts                 -> Cultural, biological & tactical species data
+
+
+================================================================================
+PART 3: MATHEMATICAL & ASTROPHYSICAL ENGINE
+================================================================================
+
+3.1 ASTRONOMICAL DISTANCE SCALE CALIBRATION (AU, KM, SCENE UNITS)
+-----------------------------------------------------------------
+To render an entire solar system from the Sun out to Pluto and a distant Black
+Hole in WebGL without floating-point z-fighting while displaying real-world
+astronomical distances, the simulation uses a calibrated linear scale defined in
+`/src/utils/scaleFormatters.ts`:
+
+  * 1 Astronomical Unit (AU) = 149,597,870.7 km (exact IAU definition: the mean
+    distance between Earth and the Sun).
+  * In the 3D scene coordinate space:
+      1 AU = 235 Scene Units
+      1 Scene Unit = 149,597,870.7 km / 235 = 636,586.6838 km
+  * Example Sol System Calibration:
+      - Earth Orbit (`[0, 0, -1450]`): ~6.17 AU from Sol Center
+      - Saturn Orbit (`[3700, -35, 3600]`): ~21.97 AU
+      - Pluto & Charon (`[7400, 65, 5600]`): ~39.49 AU (matches Pluto's real
+        orbital range of 30 to 49 AU!)
+      - Sol Singularity Black Hole (`[11335, 110, 8600]`): ~60.5 AU (situated
+        21 AU beyond Pluto's orbit so its gravity never disturbs planetary orbits).
+
+3.2 SPEED (c AND km/s) VS. DISTANCE (AU AND LIGHT-YEARS)
+--------------------------------------------------------
+A critical physics concept highlighted in this project is the rigorous
+distinction between units of SPEED and units of DISTANCE:
+  * "c" (Speed of Light) is a UNIT OF SPEED:
+      1 c = 299,792.458 km/s (approx. 3.00 x 10^5 km/s)
+      In Astronomical Units per second:
+      1 c = 299,792.458 / 149,597,870.7 ≈ 0.002004 AU/s (1 AU every ~499 seconds,
+      which is why sunlight takes 8 minutes 19 seconds to reach Earth).
+  * "Light-Year" (LY) is a UNIT OF DISTANCE (the distance light travels in one
+    Julian year of 31,557,600 seconds):
+      1 LY = 9,460,730,472,580.8 km ≈ 63,241.077 AU
+  * Therefore, traveling at "8.5c" (8.5 times the speed of light = 2,548,236 km/s)
+    is a speed, whereas "8.5 Light-Years" is an interstellar distance of over
+    80 trillion kilometers. The simulation's telemetry strictly displays speed in
+    `km/s`, `AU/s`, and `c`, and displays distances in `AU` (and `LY` for
+    multi-quadrant encyclopedia references).
+
+3.3 EXACT KINEMATIC SYNCHRONIZATION (WHY DELTA-D / DELTA-T = VELOCITY)
+----------------------------------------------------------------------
+To ensure that a judge or student watching the Chase Flight Telemetry menu and
+the Tactical Radar sees 100% mathematical consistency:
+  1. At every frame, the ship's 3D velocity vector `this.velocity` has a
+     magnitude `V_scene` in Scene Units per second.
+  2. The distance `D_scene` to any stationary planet or target changes at a
+     rate of `d(D_scene)/dt = V_scene` (when flying directly toward or away from
+     the target).
+  3. Because radar and target distances are converted to AU via:
+       Distance (AU) = D_scene / 235
+     the rate of change of distance on the radar is exactly:
+       Radar Delta-d / Delta-t (AU/s) = V_scene / 235
+  4. And the ship's velocity in kilometers per second is computed directly from
+     the exact same vector:
+       Velocity (km/s) = V_scene * (149,597,870.7 / 235)
+                       = V_scene * 636,586.6838 km/s
+  5. Both scientific notation (`e.g., 5.41 x 10^7 km/s`) and full comma-separated
+     integer notation (`e.g., 54,109,868 km/s`) are shown simultaneously in the
+     Flight Telemetry panel so every observer can verify that the speed matches
+     the radar countdown second-by-second.
+
+3.4 CANONICAL STAR TREK WARP FACTOR EQUATIONS (TNG OKUDA & TOS SCALES)
+----------------------------------------------------------------------
+The simulation implements the official Star Trek warp velocity equations in
+`getStarTrekCanonicalWarpSpeed(warpFactor)`:
+  1. Star Trek: The Next Generation (Okuda Scale, Warp 1 to 9):
+       v(w) = w^(10/3) * c
+     - Warp 1.0 = 1.00 c       = 2.998 x 10^5 km/s (299,792 km/s)
+     - Warp 2.0 = 10.08 c      = 3.02 x 10^6 km/s
+     - Warp 3.0 = 38.94 c      = 1.17 x 10^7 km/s
+     - Warp 4.0 = 101.59 c     = 3.05 x 10^7 km/s
+     - Warp 5.0 = 213.75 c     = 6.41 x 10^7 km/s
+     - Warp 6.0 = 392.50 c     = 1.18 x 10^8 km/s
+     - Warp 7.0 = 656.14 c     = 1.97 x 10^8 km/s
+     - Warp 8.0 = 1,024.00 c   = 3.07 x 10^8 km/s
+     - Warp 9.0 = 1,516.38 c   = 4.55 x 10^8 km/s
+  2. Above Warp 9.0 (Asymptotic Exponential Approach toward Warp 10 Infinite
+     Threshold):
+     - Warp 9.2 ≈ 1,649 c
+     - Warp 9.6 ≈ 1,909 c
+     - Warp 9.9 ≈ 3,053 c      = 9.15 x 10^8 km/s
+  3. Star Trek: The Original Series (TOS Cubic Scale Reference):
+       v_TOS(w) = w^3 * c
+
+3.5 COLLISION AVOIDANCE & SAFE STANDOFF VECTOR MATHEMATICS
+----------------------------------------------------------
+When plotting an automatic warp course to any planet, star, or space station,
+`calculateSafeCoordinates()` in `/src/three/solarSystems.ts` prevents the ship
+from flying inside solid planetary geometry:
+  * It computes the Euclidean distance from the target coordinate to every
+    celestial body's center and compares it against:
+      SafeRadius = max(PlanetRadius * 2.5 + 140, RingOuterRadius + 140, 220)
+  * If the destination lies inside `SafeRadius`, it projects a normalized
+    approach vector `(ShipPos - BodyCenter) / ||ShipPos - BodyCenter||` and
+    places the warp dropout waypoint cleanly in orbital standoff outside the
+    planet's rings and atmosphere.
+
+
+================================================================================
+PART 4: COMPLETE FLIGHT CONTROLS, KEYBOARD SHORTCUTS & MOUSE MANUAL
+================================================================================
+
+NOTE ON INITIAL LOAD STATE:
+When the simulation starts, the USS Enterprise initializes in the Sol System near
+Earth with Impulse Throttle set to 0% (Full Stop) so the presenter or visitor
+has complete control before beginning movement.
+
+4.1 ATTITUDE & 3D FLIGHT STEERING CONTROLS
+------------------------------------------
+  * W / Up Arrow (↑)       : Pitch Nose Down
+  * S / Down Arrow (↓)     : Pitch Nose Up
+  * A / Left Arrow (←)     : Yaw Turn Left (Port)
+  * D / Right Arrow (→)    : Yaw Turn Right (Starboard)
+  * Q                      : Roll Counter-Clockwise (Port Bank)
+  * E                      : Roll Clockwise (Starboard Bank)
+  * Mouse Click + Drag     : 3D Camera Orbit / Yoke Look (Natural alignment:
+                             dragging right rotates view right; dragging up
+                             tilts view up)
+
+4.2 PROPULSION, IMPULSE THROTTLE & WARP DRIVE SHORTCUTS
+-------------------------------------------------------
+  * Ctrl + Alt + 1 .. 9    : Immediately Engage Warp Drive at Warp Factor 1 to 9
+  * Ctrl + Alt + R (or 0)  : Emergency Drop Out of Warp / Abort Course Plot
+                             (Immediately restores manual W/A/S/D steering)
+  * Escape / Backspace     : Drop Out of Warp (if warping) or Clear Target Lock
+  * Mouse Wheel / Presets  : Adjust Impulse Throttle (0% Full Stop, 25% 1/4
+                             Impulse, 50% 1/2 Impulse, 75% 3/4 Impulse, 100%
+                             Full Impulse)
+  * Shift Key              : Trigger Evasive Thruster Boost (Temporary high-G
+                             maneuvering burst; drains thruster reserve from
+                             100% and recharges when stopped)
+  * Z Key                  : Deselect Target / Clear Active Route & Weapon Locks
+
+4.3 TACTICAL COMBAT, WEAPONS, SHIELDS & ALERT SHORTCUTS
+-------------------------------------------------------
+  * Spacebar (Hold)        : Fire Dual Saucer Phaser Arrays (Continuous beam
+                             lock; consumes phaser capacitor energy)
+  * T Key                  : Launch Photon Torpedo (High-yield antimatter
+                             warhead with homing lock on selected hostile)
+  * Tab Key                : Cycle / Lock Next Hostile Enemy Vessel
+  * G Key (Single Press)   : Toggle Condition Yellow (Defensive Standby Alert)
+  * G Key (Double Press)   : Engage Condition Red (Battle Stations / Red Alert)
+  * U Key                  : Dock / Undock at Nearest Starfleet Space Station
+                             (When within <= 650 units / orbital range)
+
+4.4 CONSOLES, ASTROMETRIC MAPS, AUDIO & DATABASE SHORTCUTS
+----------------------------------------------------------
+  * J Key                  : Open / Close Starfleet Mission Command Briefing
+  * M Key                  : Open / Close Full-Screen Astrometrics Star &
+                             Planetary Map
+  * N Key                  : Open / Close Quick Course Plotter & Warp Calculator
+  * R Key                  : Toggle Tactical Astrometric Radar Scanner Overlay
+  * L Key                  : Toggle Real-Time Tactical Combat Log Console
+  * X Key                  : Open / Close Star Trek Exobiology & Alien Species
+                             Database
+  * B Key                  : Toggle Star Trek Orchestral Battle Theme ON / OFF
+  * Alt + B                : Restart Battle Theme at Main Fanfare Crescendo (0:38)
+  * V Key                  : Toggle USS Enterprise Computer Voice Telemetry ON/OFF
+
+4.5 CAMERA PERSPECTIVES & 3D BRIDGE INTERIOR STATION CONTROLS
+-------------------------------------------------------------
+  * C Key                  : Cycle Camera Perspectives:
+                             1. Chase View (External dynamic flight camera)
+                             2. Tactical View (High-angle combat overview)
+                             3. Cinematic View (Sweeping dramatic camera)
+                             4. 360° Ship Orbit Inspection View
+                             5. 3D Bridge Interior First-Person View
+  * 1 Key                  : Enter 3D Bridge Interior / Cycle Bridge Stations
+  * Keys 1 - 5 (In Bridge) : Smoothly Slerp/Lerp Camera into Crew Station POVs:
+                             [1] Captain's Center Command Chair
+                             [2] Helm & Navigation Forward Console
+                             [3] Tactical & Weapons Perimeter Alcove
+                             [4] Science & Astrometrics Perimeter Alcove
+                             [5] Communications & Engineering Alcove
+  * + / - or Mouse Scroll  : Camera POV Zoom In / Zoom Out (Works in both
+                             External Ship Views and 3D Bridge Interior!)
+  * 0 Key / Double-Click   : Reset Camera Zoom & Look Angle to 100% Center
+
+
+================================================================================
+PART 5: HEADS-UP DISPLAYS (HUDs), 3D BRIDGE INTERIOR & LCARS CONSOLES
+================================================================================
+
+5.1 TOP LCARS COMMAND & ALERT HEADER BAR (`LCARSHeader.tsx`)
+------------------------------------------------------------
+Positioned along the top edge of the viewport, the LCARS Header displays:
+  * Starship Registry ("USS ENTERPRISE NCC-1701"), Current Sector Name, and
+    Active Alert Condition badge (Condition Green, Condition Yellow, Red Alert).
+  * Player Officer Progression Badge: Displays Current Rank (Ensign through
+    Fleet Admiral), Level, XP progress bar, and the 6-Digit Exhibition Officer
+    Code button.
+  * Quick-Access Modal Launchers:
+    - [3D BRIDGE] Toggle button to step inside the Enterprise Bridge.
+    - [MISSIONS (J)] Starfleet Mission Command & Active Mission indicator.
+    - [LAB] Planetary Spectroscopy & Habitability Laboratory.
+    - [SPECIES (X)] Alien Civilization Database.
+    - [INSPECT] 360° Subsystem & Deck Inspection drawer.
+    - [RADAR (R)] Tactical Radar toggle.
+    - [LOG (L)] Stardate Tactical Log counter.
+    - [VOICE (V)] Computer Voice toggle & synthesizer settings.
+    - [MUSIC (B)] Star Trek Battle Theme player & settings.
+    - [HELP (?)] Flight & Operations Manual.
+
+5.2 IN-FLIGHT TELEMETRY, VELOCITY READOUT & TACTICAL ORDNANCE HUD (`FlightHUD.tsx`)
+-----------------------------------------------------------------------------------
+1. Left Flight Telemetry Panel:
+   - Displays current Propulsion Mode (`WARP X.X`, `IMPULSE XX%`, or `FULL STOP`).
+   - Velocity (`km/s`): Power-of-10 scientific notation (e.g., `5.41 x 10^7 km/s`).
+   - Exact `km/s`: Full comma-separated integer speed (e.g., `54,109,868 km/s`).
+   - Radar `Delta-d / Delta-t`: Exact distance change rate in `AU/s` (`0.36 AU/s`).
+   - Canonical Star Trek Warp Reference (`c` and `km/s`) when in Warp Drive.
+   - Structural Hull Integrity bar (`%`), Deflector Shield strength (`%`),
+     Phaser Capacitor charge (`%`), and Evasive Boost reserve (`%`).
+
+2. Right Target Telemetry & Combat Wave Panel:
+   - Shows locked celestial body or hostile ship name, classification, distance
+     in `AU`, and real-time structural/shield status.
+   - During combat, displays Active Wave Level, Hostiles Remaining, Adaptive AI
+     Difficulty Rating, and quick buttons to Lock Next Hostile or Warp to the
+     Nearest Space Dock for emergency repairs.
+
+5.3 INTERACTIVE 3D USS ENTERPRISE BRIDGE INTERIOR (`BridgeCommandHUD.tsx`)
+--------------------------------------------------------------------------
+When the user switches to the 3D Bridge Interior view, the 2D outer HUD panels
+automatically step aside so the 3D bridge consoles and panoramic Main Viewscreen
+take center stage:
+  * Top Station Switcher Bar: Positioned cleanly below the top LCARS header so
+    nothing is clipped or hidden. Allows 1-click camera transitions between
+    Captain, Helm/Nav, Tactical, Science, and Comms/Engineering, plus POV Zoom
+    (`-`, `100%`, `+`) and Main Viewscreen Optical Zoom (`1x` to `8x`).
+  * Station-Specific Interactive Bottom Control Decks:
+    - CAPTAIN STATION: Alert Condition selectors (Green/Yellow/Red), Quick
+      Command Orders (Engage Warp, Lock Hostile, Summon Fleet, Open Missions),
+      and Main Viewscreen optical zoom slider.
+    - HELM & NAVIGATION STATION: 3D Attitude Heading/Pitch controls, Impulse
+      Throttle presets (Full Stop to Full Impulse), Warp Factor slider (1.0 to
+      9.9), Engage/Drop Warp toggle, Evasive Boost, and Quick Course Plotter.
+    - TACTICAL & WEAPONS STATION: Features an embedded **Live Target Pinpoint
+      Viewscreen Monitor** that mirrors the forward view of the locked enemy
+      ship with a targeting reticle, Hull/Shield telemetry bars, `[<< PREV]` and
+      `[NEXT >>]` target quick-switch buttons, Dual Phaser Fire button, Photon
+      Torpedo launcher (`[T]`), and Shield Harmonic Frequency tuner (`MHz`).
+    - SCIENCE & ASTROMETRICS STATION: Grating Spectrometer Wavelength tuner
+      (`100 nm` to `900 nm`), Deflector Dish Particle Beam launcher, Planetary
+      Spectroscopy Lab button, and Astrometric Dossier button.
+    - COMMUNICATIONS & ENGINEERING STATION: Subspace Transceiver Frequency tuner
+      (`MHz`), Starfleet Mission Comms link, Space Station Docking/Undocking
+      controls, and Shield/Power allocation indicators.
+
+5.4 REAL-TIME TACTICAL ASTROMETRIC RADAR SCANNER (`TacticalRadar.tsx`)
+----------------------------------------------------------------------
+Located in the bottom-left corner during external flight (`R` key):
+  * Renders a circular polar astrometric sweep centered on the USS Enterprise's
+    current heading.
+  * Range Rings are calibrated in **Astronomical Units (`AU`)** across 3
+    selectable zoom modes:
+    - Short Range (`0.53 AU`, `1.06 AU`, `1.60 AU`)
+    - Medium Range (`2.55 AU`, `5.11 AU`, `7.66 AU`)
+    - Long Range (`7.45 AU`, `14.89 AU`, `22.34 AU`)
+  * Color-coded interactive blips represent Stars (Yellow), Planets (Blue/Cyan),
+    Starbases (White/Emerald), Anomalies/Black Holes (Orange/Purple), and
+    Hostile Warships (Red pulsing triangles).
+  * Clicking any radar blip locks that object and opens a compact action bar to
+    Plot Course, Inspect "Know More" Dossier, or Dock.
+
+5.5 BOTTOM LCARS HELM, PROPULSION & ORDNANCE CONTROL DECK (`LCARSControls.tsx`)
+-------------------------------------------------------------------------------
+Arranged along the bottom of the screen in external camera views:
+  * Left Module (Camera & Zoom): Switches between Chase, Tactical, Cinematic,
+    Orbit, and 3D Bridge views, plus `- / 100% / +` zoom buttons.
+  * Center Module (Propulsion & Navigation): Impulse Throttle slider and preset
+    buttons (`STOP`, `1/4`, `1/2`, `3/4`, `FULL`), Warp Factor selector (`1.0`
+    to `9.9`), `ENGAGE WARP / DROP WARP` master button, `NAV COURSE [N]`, and
+    `STAR MAP [M]`.
+  * Right Module (Tactical Ordnance & Defense): Compact **Shield %** and **Hull %**
+    status badges integrated directly into the Tactical Ordnance header, Dual
+    Phaser Bank trigger (`SPACE`), Photon Torpedo launcher (`T`) with remaining
+    torpedo counter, Shield Raise/Lower toggle, Auto-Track Dogfight Assist,
+    `NEXT TARGET [TAB]`, and `SUMMON FLEET` wave spawner.
+
+5.6 PLANETARY SPECTROSCOPY & HABITABILITY SENSOR LABORATORY (`PlanetaryScannerModal.tsx`)
+-----------------------------------------------------------------------------------------
+A dedicated scientific workstation where visitors can:
+  * Perform multi-band atmospheric spectroscopy on any selected planet (e.g.,
+    Earth, Mars, Venus, Saturn, Titan, Vulcan, Qo'noS, Romulus).
+  * Inspect chemical composition bar charts ($N_2$, $O_2$, $CO_2$, $CH_4$, $H_2$,
+    $He$, $SO_2$), surface temperature (Kelvin & Celsius), surface gravity ($g$),
+    magnetic field strength ($\mu\text{T}$), and Starfleet Planetary Class
+    (Class-M Terran, Class-J Gas Giant, Class-N Sulfuric Greenhouse, Class-P
+    Glacial Ice, etc.).
+  * Launch high-energy Deflector Particle probes and earn Science XP.
+
+5.7 360-DEGREE SHIP SUBSYSTEM & DECK-BY-DECK INSPECTION (`ShipInspectionModal.tsx`)
+-----------------------------------------------------------------------------------
+Allows visitors to click on 14 major engineering subsystems of the USS Enterprise
+(Main Bridge Deck 1, Officer Quarters, Impulse Engineering, Matter/Antimatter
+Warp Core, Parabolic Navigational Deflector, Bussard Ramscoops, Warp Nacelle
+Coils, Dorsal/Ventral Phaser Arrays, Forward Photon Torpedo Tubes, Tractor Beam
+Emitter, Shuttlebay Hangar, Sensor Arrays). Selecting any subsystem smoothly
+orbits the 3D camera around that exact part of the hull and displays its
+technical schematic and operational status.
+
+5.8 DEEP-SPACE SPACEDOCK OPERATIONS & AUTOMATED REPAIR DRONES
+-------------------------------------------------------------
+When the Enterprise approaches within 650 units of any Starfleet Spacedock or
+Deep Space 9 and presses `U` (or clicks `DOCK AT STATION`):
+  * Magnetic Docking Clamps engage and Umbilical Shore Power connects.
+  * Hull integrity and Deflector Shields restore to 100%, and Photon Torpedoes
+    reload to full capacity (32 torpedoes).
+  * Visitors can deploy swarms of **3D Autonomous Orbital Repair Drones** in
+    four specialized engineering modes (`Ablative Armor Plating`, `Structural
+    Truss Micro-Welding`, `Hull Breach Sealing`, and `Full Starfleet Overhaul`).
+    The drones physically fly out in the 3D scene and project glowing laser
+    welding beams onto the Enterprise hull!
+
+
+================================================================================
+PART 6: ASTROMETRICS STAR MAPS, 30 SOLAR SYSTEMS & SINGULARITY TRANSIT
+================================================================================
+
+6.1 GALACTIC CARTOGRAPHY ACROSS ALL FOUR QUADRANTS (`StarSystemMapModal.tsx`)
+-----------------------------------------------------------------------------
+Pressing `M` opens the full-screen interactive Astrometrics Cartography console,
+featuring two synchronized views:
+  1. GALAXY QUADRANT MAP: Displays the Alpha, Beta, Gamma, and Delta Quadrants
+     with territory boundaries (United Federation of Planets in Blue, Klingon
+     Empire in Red-Orange, Romulan Star Empire in Emerald, Cardassian Union in
+     Amber, Dominion in Violet, Borg Collective in Neon Green).
+  2. SYSTEM ORBITAL MAP: Zooms into any selected star system to show its primary
+     star, planetary orbits, moons, asteroid/nebula hazards, and Spacedocks,
+     allowing 1-click course plotting at any chosen Warp Factor.
+
+6.2 COMPLETE CATALOG OF ALL 30 STAR SYSTEMS, NEBULAE & SPACEDOCKS
+-----------------------------------------------------------------
+1.  **Sol System (Sector 001 - Alpha Quadrant)**:
+    Sun (G2V Yellow Dwarf), Mercury, Venus, Earth, The Moon (Luna), Mars,
+    Jupiter, Europa, Saturn, Titan, Uranus, Neptune, Pluto & Charon, and the
+    **Sol Singularity (Kerr Black Hole, 21 AU beyond Pluto)**.
+2.  **40 Eridani / Vulcan System (Alpha Quadrant)**:
+    40 Eridani A (K1V Orange Dwarf), Vulcan (Class-M), T'Khut (Volcanic Sister).
+3.  **Procyon / Andorian System (Beta Quadrant)**:
+    Procyon (F5 Subgiant), Ka'Thelan (Ringed Gas Giant), Andoria (Class-P Ice Moon).
+4.  **61 Cygni / Tellar Prime System (Alpha Quadrant)**:
+    61 Cygni Binary, Tellar Prime (Class-M).
+5.  **Beta Zeta / Betazed System (Alpha Quadrant)**:
+    Beta Zeta, Betazed (Class-M Telepathic Haven).
+6.  **Trillius / Trill System (Alpha Quadrant)**:
+    Trillius Prime, Trill (Class-M Sapphire Ocean World).
+7.  **Epsilon Ceti / Risa System (Beta Quadrant)**:
+    Epsilon Ceti B, Risa (Subtropical Pleasure Planet).
+8.  **Wolf 359 Sector (Alpha Quadrant)**:
+    Wolf 359 Red Dwarf, Starfleet Memorial Buoy, USS Saratoga Graveyard Hulk.
+9.  **Sector 001 Void - Deep Space Spacedock One**:
+    Monumental Starfleet Spacedock in pitch-black interstellar void.
+10. **Deep Space Dock 74 (Interstellar Void)**:
+    Deep-space fleet repair and resupply megadock.
+11. **Deneb IV / Farpoint Sector (Alpha Quadrant Frontier)**:
+    Deneb Kaitos Supergiant, Deneb IV (Bandi World).
+12. **Babel Neutral System (Alpha Quadrant)**:
+    Babel Primary, Babel Diplomatic Planetoid.
+13. **Bolarus IX / Bolian Sector (Alpha Quadrant)**:
+    Bolarus Star, Bolarus IX (Azure Archipelago World).
+14. **Benzar / Benzite Sector (Alpha Quadrant)**:
+    Benzar Sun, Benzar (Crystalline Spire World).
+15. **Ceti Alpha Sector (Alpha Quadrant)**:
+    Ceti Alpha Red Dwarf, Ceti Alpha V (Desert Wasteland), SS Botany Bay Relic.
+16. **Qo'noS / Klingon Imperial Territory (Beta Quadrant War Zone)**:
+    Klingon Prime, Qo'noS (Homeworld), Praxis (Shattered Dilithium Moon Remnant),
+    Rura Penthe (Penal Ice World), Boreth (Monastery World), and the **Qo'noS
+    White Hole (21 AU outside planetary orbits)**.
+17. **Khitomer Sector (Beta Quadrant Border Zone)**:
+    Khitomer Binary Sun, Khitomer Colony.
+18. **Narendra Sector (Beta Quadrant)**:
+    Narendra Star, Narendra III (Enterprise-C Historic Outpost).
+19. **Mempa Sector / Klingon Fleet Staging Ground (Beta Quadrant)**:
+    Mempa Red Giant, Mempa Prime Fortress World.
+20. **Kriosian System (Beta Quadrant)**:
+    Krios Primary, Krios Prime, Valt Minor.
+21. **Romulus / Romulan Star Empire (Beta Quadrant War Zone)**:
+    Romulan Binary Sun, Romulus (Ch'Rihan), Remus (Ch'Havran).
+22. **Deep Space Dock K-7 (Neutral Zone Void)**:
+    Frontline Starfleet Spacedock bordering the Neutral Zone.
+23. **Hobus Supernova Sector (Beta Quadrant Deep Space)**:
+    Hobus Volatile Giant, Hobus Prime.
+24. **Devron Sector / Neutral Frontier (Beta Quadrant)**:
+    Devron Sun, Devron III, Anti-Time Subspace Rift Anomaly.
+25. **Cheron Battleground Sector (Beta Quadrant)**:
+    Cheron Blue Subgiant, Cheron Planetoid, Cloaked Plasma Minefield.
+26. **Cardassia System / Cardassian Union (Alpha Quadrant War Zone)**:
+    Cardassia Orange Giant, Cardassia Prime, Cardassia IV Shipyards.
+27. **Chin'toka Sector / Dominion War Front (Alpha Quadrant)**:
+    Chin'toka Sun, Chin'toka III, Automated Orbital Weapon Platforms.
+28. **Celtris Sector / Obsidian Stronghold (Alpha Quadrant)**:
+    Celtris Red Star, Celtris III Subterranean Cavern World.
+29. **Bajoran System & Wormhole (Alpha Quadrant)** + **Denorios Void (Deep Space 9)**:
+    Bajor-B'hava'el, Bajor, Bajoran Wormhole (Celestial Temple), and Deep Space 9.
+30. **Additional Frontier, Gamma & Delta Quadrant Sectors**:
+    - **The Badlands Sector**: Violent Plasma Storm Nebula.
+    - **Ferenginar System**: Ferenginar (Rain-Soaked Alliance Capital).
+    - **Breen Confederacy**: Breen Sub-Zero Glacial World.
+    - **Mutara Sector & Genesis Range**: Mutara Ion Nebula, Regula, Genesis Planet.
+    - **Sector 44140 / The Briar Patch**: Ba'ku Ringed World & Metaphasic Cloud.
+    - **Gorn Hegemony**: Gornar & Cestus III.
+    - **Tholian Assembly**: Tholia (Class-Y Crystalline World) & Spatial Web Beacon.
+    - **Idran System (Gamma Quadrant)**: Idran Supermassive Gas Giant & Gamma
+      Wormhole Terminus (70,000 LY from Bajor).
+    - **Omarion Sector (Gamma Quadrant)**: Founders' Great Link Homeworld.
+    - **Delta Quadrant Caretaker Sector**: Caretaker Array & Ocampa V.
+    - **Borg Collective Transwarp Perimeter (Delta Quadrant)**: Borg Unicomplex
+      Central Node & Transwarp Conduit Hub 01.
+    - **Deep Space Dock Aegis (Galactic Rim Void)**: Outermost Starfleet Spacedock.
+
+6.3 RELATIVISTIC KERR BLACK HOLE (SOL) TO WHITE HOLE (QO'NOS) TRANSIT
+---------------------------------------------------------------------
+Located 21 AU beyond Pluto (`[11335, 110, 8600]`), the **Sol Singularity** is a
+rotating Kerr Black Hole surrounded by a blazing orange-cyan relativistic
+accretion disk and Einstein gravitational lensing halo:
+  * As the Enterprise approaches within 310 scene units (`~1.3 AU`) of the event
+    horizon, gravitational pull and spacetime frame-dragging intensify.
+  * Crossing the event horizon triggers an Einstein-Rosen Bridge (Wormhole)
+    relativity transit sequence, catapulting the starship across quadrants to
+    emerge from the incandescent **Qo'noS White Hole** (`[79100, 2400, -90900]`)
+    in the outer Klingon sector!
+
+
+================================================================================
+PART 7: STARFLEET MISSIONS, REAL SCIENCE WORKSTATIONS & OFFICER PROFILES
+================================================================================
+
+Pressing `J` opens the **Starfleet Command Mission Briefing Console**, which
+offers both Curated Story Missions and an infinite **Procedural Mission
+Generator** across 4 scientific and tactical archetypes. When the ship flies
+within proximity (`<= 520 units`) of a mission waypoint, the interactive
+**In-HUD Mission Workstation** automatically expands.
+
+7.1 ARCHETYPE 1: FIRST CONTACT & XENOLINGUISTIC DIPLOMACY
+---------------------------------------------------------
+  * Real Science Taught: Radio Astronomy SETI frequencies—such as the **Neutral
+    Hydrogen 21-cm hyperfine transition line (1420.4 MHz)** and the **Hydroxyl
+    radical OH maser line (1612.2 MHz)** ("The Water Hole")—combined with
+    mathematical **Game Theory** (Nash Bargaining Equilibrium, Stag Hunt
+    Cooperation, Credible Deterrence, and Verified Prisoner's Dilemma Mirroring).
+  * Interactive Gameplay:
+    1. Tune the Subspace Transceiver carrier wave slider (`MHz`) to lock onto the
+       alien vessel's exact emission frequency (Vulcan High Command, Klingon
+       Defense Force, Romulan Star Empire, or Andorian Imperial Guard).
+    2. Analyze the civilization's cultural logic and respond to multi-stage
+       diplomatic hails by choosing the optimal game-theory strategy.
+
+7.2 ARCHETYPE 2: ASTROPHYSICAL ANOMALY INVESTIGATION (QUANTUM SPECTROSCOPY)
+---------------------------------------------------------------------------
+  * Real Science Taught:
+    - **Emission Nebulae**: Atomic Spectroscopy & Balmer H-Alpha Recombination
+      (`1/λ = R_H * (1/2^2 - 1/n^2)`, `λ = 656.28 nm`).
+    - **Supernova Remnants**: Fermi Synchrotron Shock Acceleration & Heavy
+      Nucleosynthesis (`E_max ∝ Z * e * B * R_shock * (v_shock / c)`).
+    - **Millisecond Pulsars**: Conservation of Angular Momentum (`L = I * ω`) &
+      Magnetic Dipole Radiation (`B = 10^10 Tesla`).
+    - **Quantum Singularities**: General Relativistic Schwarzschild Radius
+      (`R_s = 2GM / c^2`) & Gravitational Redshift (`z_grav`).
+  * Interactive Gameplay:
+    1. Modulate the Enterprise's **Multipole Shield Harmonics** (Multipole Order
+       & Magnetic Field Strength in Tesla) to protect the crew from Sievert/hour
+       radiation flux.
+    2. Calibrate the **Grating Spectrometer Wavelength (`nm`)** and **Relativistic
+       Doppler/Gravitational Redshift (`z`)** sliders to isolate the exact
+       quantum emission lines (`656.3 nm H-Alpha`, `500.7 nm [O III]`,
+       `468.6 nm He-II`, `185.0 nm Iron K-Shell X-Ray`) and launch a telemetry
+       probe into the 3D anomaly core.
+
+7.3 ARCHETYPE 3: PLANETARY DEFENSE & TACTICAL FLEET ESCORT
+----------------------------------------------------------
+  * Real Science & Engineering Taught: Energy capacitor management, harmonic
+    frequency resonance, angular tracking kinematics, and defensive perimeter
+    geometry.
+  * Interactive Gameplay: Intercept multi-wave hostile squadrons threatening a
+    Federation colony or starbase using phasers, photon torpedoes, and shield
+    harmonic modulation.
+
+7.4 ARCHETYPE 4: PLANETARY MAGNETOSPHERE & IONOSPHERIC RESCUE (MHD PHYSICS)
+---------------------------------------------------------------------------
+  * Real Science Taught:
+    - **Coronal Mass Ejection (CME) Impact**: Magnetohydrodynamics (MHD), Lorentz
+      Force Deflection (`F = q(E + v x B)`), and Solar Wind Ram Pressure vs.
+      Magnetic Pressure (`P_ram = ρ * v^2 ≈ B^2 / 2μ_0`).
+    - **Geomagnetic Core Dynamo Collapse**: Planetary Geodynamo & Magnetic
+      Induction Equation (`∂B/∂t = ∇ x (v x B) + η∇^2B`).
+    - **Runaway Ionospheric Stripping**: Plasma Cyclotron Resonance Frequency
+      (`ω_c = |q|B / m`) & Planetary Escape Velocity (`v_esc = sqrt(2GM / R)`).
+  * Interactive Gameplay:
+    1. Select the correct **Deflector Particle Beam Mode** (`Positron Stream`,
+       `Graviton Pulse`, `Baryon Sweep`, or `Inverse Tachyon Beam`).
+    2. Tune the **Cyclotron Resonance Frequency (`GHz`)** and **Parabolic Beam
+       Aperture (`Degrees`)** sliders to match the planet's magnetospheric crisis.
+    3. Fire the 3D Main Navigational Deflector Beam directly into the planet's
+       upper ionosphere to restore its magnetic dipole shield!
+
+7.5 MISSION GRADING (S TO D), ADAPTIVE AI DIFFICULTY & STARFLEET RANKS
+----------------------------------------------------------------------
+Upon completing any mission, `calculateMissionPerformanceReport()` evaluates:
+  * Scientific/Spectroscopic Accuracy (`%`)
+  * Tactical & Shield Harmonic Efficiency (`%`)
+  * Diplomatic / MHD Calibration Precision (`%`)
+  * Completion Time Bonus & Optional Objectives
+It awards an official Starfleet Grade (`S`, `A`, `B`, `C`, or `D`), bonus XP, and
+promotes the player across official Starfleet Ranks:
+  `Ensign` -> `Lieutenant JG` -> `Lieutenant` -> `Lt. Commander` -> `Commander`
+  -> `Captain` -> `Commodore` -> `Rear Admiral` -> `Vice Admiral` -> `Fleet Admiral`.
+
+7.6 6-DIGIT SCIENCE EXHIBITION OFFICER PROFILE CODE SYSTEM
+----------------------------------------------------------
+Designed specifically for a busy Science Exhibition booth:
+  * Any visitor can click the **Officer Profile badge** in the top LCARS bar to
+    generate a unique **6-Digit Officer Code** (e.g., `482910`).
+  * Their Rank, XP, Combat Rating, and Completed Mission Transcripts are saved
+    locally under that 6-digit PIN.
+  * If another student takes a turn at the exhibition computer, the previous
+    visitor can return later, type their 6-digit PIN, and immediately restore
+    their Starfleet career!
+
+
+================================================================================
+PART 8: SCIENCE EXHIBITION PRESENTATION GUIDE & COMPREHENSIVE Q&A (35+ Q&As)
+================================================================================
+
+8.1 3-MINUTE LIVE DEMONSTRATION SCRIPT FOR EXHIBITION BOOTH PRESENTERS
+----------------------------------------------------------------------
+* **Minute 0:00 - 0:45 (The Hook & Scale of the Solar System)**:
+  "Welcome aboard the USS Enterprise NCC-1701! Right now we are holding position
+  at Full Stop in the Sol System near Earth. Notice our Tactical Radar in the
+  bottom-left: distances are measured in real Astronomical Units (AU), where
+  1 AU is 149.6 million kilometers. When I engage Warp Drive (`Ctrl+Alt+4`),
+  watch the Flight Telemetry on the left: our velocity in kilometers per second
+  (`km/s`) is shown in both scientific notation (`x 10^n km/s`) and exact zeros,
+  and it mathematically matches the exact rate at which our AU distance to
+  Saturn or Pluto counts down!"
+* **Minute 0:45 - 1:30 (Stepping Inside the 3D Bridge)**:
+  "Now let's press `1` to step inside the 3D Enterprise Bridge. Everything you
+  see—the sunken command pit, the Captain's Chair armrests, the live animated
+  oscilloscope screens, and the Starfleet bridge crew—is built procedurally in
+  Three.js at 60 FPS without any pre-rendered video. By pressing keys `1` to `5`,
+  we smoothly transition into the First-Person POV of the Captain, Helm,
+  Tactical, Science, or Engineering officer."
+* **Minute 1:30 - 2:15 (Real Astrophysics & Spectroscopy Mission)**:
+  "Pressing `J` opens Starfleet Mission Command. When we accept an Astrophysical
+  Anomaly or Magnetosphere Rescue mission, we use real physics equations—like the
+  Rydberg formula for Hydrogen Balmer H-Alpha (656.3 nm) or the Lorentz Force
+  equation—to tune our spectrometer and fire a 3D particle beam from the main
+  deflector dish."
+* **Minute 2:15 - 3:00 (Tactical Combat, Black Hole Transit & Spacedock)**:
+  "Finally, in Tactical View, we can lock onto a hostile Klingon Bird-of-Prey on
+  our embedded viewscreen, fire phasers (`Space`) and photon torpedoes (`T`),
+  fly 21 AU past Pluto into a relativistic Kerr Black Hole that transits to the
+  Qo'noS White Hole, or dock at Starfleet Spacedock (`U`) to watch autonomous 3D
+  repair drones weld our hull back to 100%!"
+
+--------------------------------------------------------------------------------
+8.2 SECTION A: GENERAL & VISITOR QUESTIONS (STUDENTS, PARENTS, PUBLIC)
+--------------------------------------------------------------------------------
+
+Q1: What is the main objective of this simulation?
+A1: It is an interactive 3D spaceflight and astrophysics simulator modeled on the
+    USS Enterprise (NCC-1701) from Star Trek. It lets users pilot a starship
+    across 30 star systems, command the 3D bridge from 5 crew stations, defend
+    against hostile fleets, and perform real-world space science missions
+    involving spectroscopy, planetary magnetic fields, and radio astronomy.
+
+Q2: Why does the ship start at 0% speed (Full Stop) when the app loads?
+A2: Starting at Full Stop (`0 km/s`) gives the presenter or new visitor time to
+    orient themselves, inspect the Earth and Moon in the Sol System, or open the
+    3D Bridge and Star Map before engaging Impulse or Warp engines.
+
+Q3: How do I move the ship forward and steer it?
+A3: Increase the Impulse Throttle slider at the bottom (or click `1/4`, `1/2`,
+    `FULL`), or press `Ctrl + Alt + 1..9` to engage Warp Drive. Steer the nose
+    using `W/S` (or Up/Down arrows) for pitch, `A/D` (or Left/Right arrows) for
+    yaw, and `Q/E` to roll.
+
+Q4: Why did my manual steering (W, A, S, D) lock when I plotted a course on the map?
+A4: When an automated Warp Course Plot is active, the ship's navigational
+    computer locks the helm onto the destination vector. You can immediately
+    retake manual control at any time by pressing `Ctrl + Alt + R` (or clicking
+    `DROP WARP`).
+
+Q5: How can I see the enemy ship when I am inside the 3D Bridge at the Tactical Station?
+A5: When you switch to the Tactical Station (Key `3` in Bridge View), the lower
+    control panel features a dedicated **Live Target Pinpoint Monitor** that
+    mirrors the forward viewscreen, highlights the locked hostile ship, shows
+    its shield and hull percentages, and lets you cycle targets (`<< PREV` /
+    `NEXT >>`) and launch Photon Torpedoes (`T`) directly.
+
+Q6: Can I zoom in and out both outside the ship and inside the 3D Bridge?
+A6: Yes! You can use the Mouse Scroll Wheel, press the `+` and `-` keys, or click
+    the `- / 100% / +` zoom buttons on the HUD in both External Chase/Orbit views
+    and inside the 3D Bridge Interior. In Bridge View, you can also zoom the
+    panoramic Main Viewscreen up to `8.0x` optical magnification.
+
+Q7: What happens if my ship takes heavy damage in combat?
+A7: You can press `U` when near any Starfleet Spacedock (or click the "Nearest
+    Space Dock" button on the HUD to auto-warp to one). Docking clamps will
+    engage, restoring shields and hull to 100%, reloading all 32 photon
+    torpedoes, and allowing you to deploy 3D flying repair drones.
+
+Q8: What happens if I fly into the Black Hole beyond Pluto?
+A8: Located 21 AU past Pluto in the Sol System is the Sol Kerr Singularity. If
+    you fly across its event horizon, gravitational lensing envelops the ship
+    and transports you through an Einstein-Rosen bridge (wormhole), ejecting you
+    from the incandescent White Hole in the Qo'noS (Klingon) system!
+
+Q9: What is the 6-digit code in the top bar for?
+A9: That is the **Science Exhibition Officer Profile System**. Visitors can
+    create a 6-digit PIN code that saves their Starfleet Rank, XP, and mission
+    grades so they can return to the booth later and resume their progress.
+
+Q10: Where do the planetary surface textures for Earth, Mars, Jupiter, and Saturn come from?
+A10: The Sol System planets use real 2K equirectangular NASA/astrometric surface
+     maps (stored locally in `/public/assets/planets/`) combined with procedural
+     bump mapping, atmospheric glow shaders, and high-resolution concentric ring
+     textures that accurately depict Saturn's Cassini Division and Encke Gap.
+
+--------------------------------------------------------------------------------
+8.3 SECTION B: PHYSICS, ASTRONOMY & SPACE SCIENCE QUESTIONS (SCIENCE JUDGES)
+--------------------------------------------------------------------------------
+
+Q11: What is the difference between "8.5c" and "8.5 Light-Years", and how does
+     your simulation handle them?
+A11: They measure two completely different physical dimensions:
+     - `c` is a unit of **speed** (the speed of light in vacuum,
+       `1c = 299,792.458 km/s`). So `8.5c` is a speed of `2,548,236 km/s`.
+     - A `Light-Year (LY)` is a unit of **distance** (the distance light travels
+       in one Julian year, `1 LY ≈ 9.461 x 10^12 km ≈ 63,241 AU`).
+     Our simulation strictly expresses velocity in `km/s`, `AU/s`, and `c` in the
+     Flight Telemetry menu, while expressing radar and target distances in
+     Astronomical Units (`AU`).
+
+Q12: How did you ensure that the ship's displayed speed (`km/s`) and the change
+     in distance on the radar (`AU`) are mathematically consistent?
+A12: Both values are derived from the exact same 3D velocity vector `v_scene`
+      every frame:
+     - We define `1 AU = 149,597,870.7 km = 235 scene units`
+       (`1 scene unit = 636,586.6838 km`).
+     - Radar distance to a target is `D_AU = D_scene / 235`, so the radar
+       distance changes at `Delta-d / Delta-t = ||v_scene|| / 235 AU/s`.
+     - The displayed velocity in `km/s` is `||v_scene|| * 636,586.6838 km/s`.
+     Because both use the identical conversion factor, if the telemetry says the
+     ship is moving at `1.00 AU/s` (`1.496 x 10^8 km/s`), the target distance on
+     the radar decreases by exactly `1.00 AU` every second (`v = Delta-d / Delta-t`).
+
+Q13: What mathematical formula does Star Trek use for Warp Factor speeds?
+A13: In *Star Trek: The Next Generation* (the Michael Okuda scale), warp speed
+     from Warp 1 to Warp 9 follows the power law:
+       `v = w^(10/3) * c`
+     where `w` is the Warp Factor and `c` is the speed of light (`299,792.458 km/s`).
+     For example, Warp 1 is `1c`, Warp 4 is `4^(10/3)c ≈ 101.6c`, and Warp 9 is
+     `9^(10/3)c ≈ 1,516.4c`. Above Warp 9, the exponent rises asymptotically
+     toward infinity at Warp 10 (Eugene's Limit), reaching `3,053c` at Warp 9.9.
+     In *The Original Series* (TOS), the simpler cubic formula `v = w^3 * c` was
+     used. Both are computed in `/src/utils/scaleFormatters.ts`.
+
+Q14: Is Faster-Than-Light (FTL) Warp Drive theoretically possible in real physics?
+A14: Special Relativity forbids any object from locally accelerating through
+     space faster than `c`. However, in 1994, physicist Miguel Alcubierre
+     published the **Alcubierre Warp Metric** in General Relativity. Rather than
+     moving through flat space faster than light, a warp drive contracts
+     spacetime in front of the vessel and expands spacetime behind it while the
+     ship sits inside a flat-spacetime "warp bubble" experiencing zero proper
+     acceleration (no relativistic time dilation or G-force crushing).
+
+Q15: What is the Rydberg Formula used in your Anomaly Investigation missions?
+A15: The Rydberg formula predicts the exact wavelength `λ` of photons emitted or
+     absorbed when an electron jumps between principal quantum energy levels
+     `n_1` and `n_2` in a hydrogen atom:
+       `1 / λ = R_H * (1 / n_1^2 - 1 / n_2^2)`
+     where `R_H ≈ 1.097 x 10^7 m^-1`. For the transition from `n = 3` to `n = 2`
+     (the Balmer H-Alpha line), this yields `λ = 656.28 nm`, which gives emission
+     nebulae like the Orion Nebula their signature ruby-red glow.
+
+Q16: Why are Forbidden Oxygen `[O III]` lines (500.7 nm) seen in nebulae but not
+     in Earth laboratories?
+A16: The `[O III]` transition at `500.7 nm` (teal-green) comes from a metastable
+     quantum state that takes many seconds to decay spontaneously. In even the
+     best vacuum chambers on Earth, atoms collide with chamber walls or other
+     gas molecules long before they can radiate a photon. Only in the ultra-low
+     density of interstellar nebulae (a few hundred atoms per cubic centimeter)
+     can the ion remain undisturbed long enough to emit the `500.7 nm` photon.
+
+Q17: How does the Planetary Magnetosphere Rescue mission teach real plasma physics?
+A17: It models three real astrophysical processes:
+     1. **Lorentz Force Deflection** (`F = q(E + v x B)`), which deflects
+        charged solar wind protons around a planet's magnetic dipole.
+     2. **Magnetopause Pressure Balance** (`P_ram = ρ * v^2 = B^2 / 2μ_0`), where
+        a Coronal Mass Ejection compresses the magnetosphere.
+     3. **Cyclotron Resonance** (`ω_c = |q|B / m`), where ions gyrate around
+        magnetic field lines at a specific frequency. By tuning the Enterprise's
+        deflector beam to the cyclotron frequency, escaping atmospheric ions are
+        trapped in closed magnetic loops.
+
+Q18: Why did you choose `1420.4 MHz` and `1612.2 MHz` for the First Contact missions?
+A18: In real SETI (Search for Extraterrestrial Intelligence) radio astronomy:
+     - `1420.405 MHz` is the **21-centimeter hyperfine spin-flip transition line
+       of neutral atomic hydrogen (H I)**, the most abundant element in the
+       universe.
+     - `1612.231 MHz` is one of the primary microwave emission lines of the
+       **hydroxyl radical (OH)**.
+     The quiet microwave band between H (`1420 MHz`) and OH (`1666 MHz`) is
+     famously called **"The Cosmic Water Hole"** (`H + OH = H2O`) by NASA SETI
+     astronomers because any water-based civilization studying the galaxy would
+     naturally monitor those exact frequencies!
+
+Q19: What is Gravitational Redshift near the Quantum Singularity / Black Hole?
+A19: According to Einstein's General Relativity, a black hole's event horizon
+     occurs at the Schwarzschild radius `R_s = 2GM / c^2`. As photons climb out
+     of the steep gravitational potential well near `R_s`, they lose energy
+     (`E = hf`), shifting their wavelength toward the red end of the spectrum by
+     `z_grav = (1 - R_s / r)^(-1/2) - 1`.
+
+Q20: Why did you place the Sol Singularity 21 AU beyond Pluto?
+A20: Pluto orbits at roughly `39.5 AU` from the Sun. By placing the Kerr
+     Singularity at `~60.5 AU` (`21 AU` outside Pluto's orbit), it sits in the
+     outer Kuiper Belt where visitors can intentionally warp to it to test
+     gravitational lensing and wormhole transit without its event horizon
+     interfering with navigation among the inner and outer planets.
+
+--------------------------------------------------------------------------------
+8.4 SECTION C: PROGRAMMING, 3D GRAPHICS & ARCHITECTURE QUESTIONS (TECH JUDGES)
+--------------------------------------------------------------------------------
+
+Q21: Which programming languages and frameworks did you use to build this?
+A21: The application is built with **TypeScript (ESNext)**, **React 19** for the
+     declarative LCARS HUD and scientific modals, **Three.js (WebGL)** for real-
+     time 3D rendering, **GLSL** for custom vertex/fragment shaders, **Tailwind
+     CSS 4** for styling, **Web Audio API / SAM-JS** for procedural sound and
+     computer voice synthesis, and **Vite 8** as the build tool.
+
+Q22: How does the 3D Bridge Interior run at 60 FPS without downloading massive
+     3D model files (`.gltf` / `.fbx`)?
+A22: Every console, chair, railing, turbolift alcove, and crew member in
+     `/src/three/bridgeInterior.ts` is generated **procedurally in memory** using
+     mathematical Three.js primitives (`CylinderGeometry`, `RingGeometry`,
+     `BoxGeometry`, `SphereGeometry`, `CapsuleGeometry`) and PBR
+     `MeshStandardMaterial` shaders. This eliminates network download bottlenecks,
+     prevents missing-asset errors, and keeps GPU draw calls compact.
+
+Q23: How are the live animated screens above the 3D Bridge consoles created?
+A23: Each upper monitor uses an offscreen HTML5 `<canvas>` element bound to a
+     `THREE.CanvasTexture`. Inside the animation loop, 2D canvas drawing routines
+     render moving sine-wave spectroscopes, shield harmonic bar graphs, and
+     astrometric radar sweeps, and set `texture.needsUpdate = true` so the 3D
+     monitors glow and animate dynamically inside the WebGL scene.
+
+Q24: How does the smooth camera transition between Bridge Stations work?
+A24: When the user presses keys `1` through `5` (or clicks a crew mannequin or
+     station button), the engine sets a target 3D camera position vector and
+     target look-at quaternion for that station's eye point. On every frame, the
+     camera smoothly interpolates its position (`Vector3.lerp`) and orientation
+     (`Quaternion.slerp`) toward the target seat, and automatically hides that
+     specific seat's 3D mannequin (`visible = false`) so the character mesh never
+     blocks the first-person camera.
+
+Q25: How did you fix the mouse-drag camera orientation so dragging right moves
+     the view right and dragging up tilts up?
+A25: In `SimulationEngine`, mouse delta movements (`deltaX`, `deltaY`) during
+     pointer drag are mapped with natural signs to the camera yaw (`spherical.theta`
+     / `bridgeLookYaw`) and pitch (`spherical.phi` / `bridgeLookPitch`), with
+     clamping on polar angles (`phi`) to prevent gimbal lock or upside-down
+     camera flipping.
+
+Q26: How do you prevent React re-renders from slowing down the 60 FPS Three.js
+     WebGL loop?
+A26: The Three.js `SimulationEngine` runs completely outside React's render cycle
+     via `requestAnimationFrame` inside a `useRef` container (`containerRef`).
+     State updates back to React (`setShipState`) are throttled, and expensive
+     calculations (like sorting universal celestial body distances) run on a
+     600ms timer (`setInterval`) or inside memoized hooks (`useMemo`).
+
+Q27: How are planetary textures and bump maps generated without freezing the browser?
+A27: In `/src/three/solarSystems.ts`, we use four global `Map` caches
+     (`textureCache`, `bumpTextureCache`, `starTextureCache`, `ringTextureCache`).
+     Each texture is generated once—or asynchronously upgraded when a 2K NASA
+     image finishes loading via `loadCachedImage()`—and reused across all render
+     frames.
+
+Q28: How does the 3D mouse-picking (clicking on a planet, starbase, or bridge
+     station) work?
+A28: We use `THREE.Raycaster`. When the user clicks the canvas, normalized device
+     coordinates (`x` and `y` in `[-1, +1]`) are calculated from `clientX` and
+     `clientY`. `raycaster.setFromCamera(mouse, camera)` casts a 3D ray into the
+     scene and intersects either the bridge station hit-boxes (when in Bridge
+     View) or planetary/enemy bounding spheres (when in External View).
+
+Q29: How are the Phaser Beams and Photon Torpedoes rendered in 3D?
+A29: - **Phasers**: Dual `THREE.CylinderGeometry` beams dynamically oriented and
+       scaled each frame between the Enterprise's dorsal/ventral saucer phaser
+       arrays and the locked target's 3D coordinates, paired with additive-blended
+       impact glow sprites.
+     - **Photon Torpedoes**: High-velocity projectile nodes wrapped in glowing
+       crimson-amber `THREE.Sprite` corona halos that home in on the locked
+       target vector and trigger a multi-particle `ParticleExplosion` upon impact.
+
+Q30: How does the Adaptive AI Difficulty system work during combat waves?
+A30: The engine tracks player combat metrics (hit accuracy, damage taken per
+     wave, time to clear hostiles, and player level). Based on a rolling
+     `combatRating` (centered at `100`), it dynamically scales enemy shield
+     strength, weapon fire rate, and fleet composition (`Standard`, `Elevated`,
+     `Severe`, `Critical`, `Legendary`).
+
+Q31: How are the sound effects (phasers, torpedoes, warp hum, Red Alert) generated?
+A31: They are synthesized in real time using the **Web Audio API**
+     (`AudioContext`). For example, phasers combine frequency-modulated sawtooth
+     oscillators passed through a bandpass filter, while photon torpedoes sweep a
+     high-to-low exponential frequency envelope with white-noise bursts.
+
+Q32: How does the USS Enterprise Computer Voice work offline or across different
+     browsers?
+A32: `computerVoice.ts` implements a dual-engine architecture: it supports the
+     retro-futuristic **SAM (Software Automatic Mouth)** formant synthesizer
+     (`sam-js`) as well as the browser's native `window.speechSynthesis` API,
+     with customizable pitch, speed, throat, and mouth formant sliders in the
+     Voice Settings modal.
+
+Q33: How does the 6-Digit Officer Profile persist data without requiring a cloud
+     login at the exhibition booth?
+A33: `officerProfileStore` serializes the officer's 6-digit PIN record (Rank, XP,
+     Level, Combat Rating, and Mission Transcripts) into browser `localStorage`.
+     This guarantees instant, zero-latency profile switching even if the
+     exhibition hall has unstable internet connectivity.
+
+Q34: What happens if a player plots a course directly into the center of a star
+     or planet?
+A34: Our collision-avoidance algorithm `calculateSafeCoordinates()` checks the
+     destination `[x, y, z]` against the physical radius and ring radius of every
+     celestial body in the galaxy. If the point lies inside the safety envelope,
+     it automatically offsets the warp dropout point along the ship's approach
+     vector to a safe orbital standoff distance.
+
+Q35: How can this project be extended in the future?
+A35: Future expansions could include WebXR (VR headset support for walking around
+     the 3D Enterprise Bridge), multi-player cooperative bridge crews via
+     WebSockets (where 5 students on separate tablets control Captain, Helm,
+     Tactical, Science, and Engineering simultaneously), and relativistic Doppler
+     starfield color-shifting at high warp factors.
+
+================================================================================
+              END OF SCIENCE EXHIBITION & TECHNICAL DOCUMENTATION
+           "To boldly go where no one has gone before." — NCC-1701
+================================================================================
