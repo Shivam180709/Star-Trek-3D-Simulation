@@ -386,7 +386,7 @@ export function buildSpaceEnvironment(scene: THREE.Scene): SpaceEnvironment {
   }
 
   // Helper: Build Kerr-Metric Black Hole with Swirling Relativistic Accretion Disk & Gravitational Lensing (Gargantua style)
-  const buildBlackHoleAnomaly = (radius: number): THREE.Group => {
+  const buildBlackHoleAnomaly = (radius: number, systemId: string = 'sol_system'): THREE.Group => {
     const bhGroup = new THREE.Group();
     bhGroup.name = 'Sol_Black_Hole_Singularity';
 
@@ -559,7 +559,7 @@ export function buildSpaceEnvironment(scene: THREE.Scene): SpaceEnvironment {
     );
     spiralPoints.rotation.z = -0.18;
     bhGroup.add(spiralPoints);
-    animatedAnomalies.push({ mesh: spiralPoints, speed: 1.4, type: 'corona' });
+    animatedAnomalies.push({ mesh: spiralPoints, speed: 1.4, type: 'corona', systemId });
 
     return bhGroup;
   };
@@ -718,7 +718,7 @@ export function buildSpaceEnvironment(scene: THREE.Scene): SpaceEnvironment {
   // 5. Build Primary Stars, Planets, Space Stations, Nebulae & Anomalies across all 40 Systems
   // Core rule: Each solar system is isolated and separated. Only the active solar system is visible!
   const targetMeshes = new Map<string, THREE.Object3D>();
-  const animatedAnomalies: { mesh: THREE.Object3D; speed: number; type: string; systemId: string }[] = [];
+  const animatedAnomalies: { mesh: THREE.Object3D; speed: number; type: string; systemId?: string }[] = [];
   const allPlanets: PlanetData[] = [];
   const activeLODObjects: { lod: THREE.LOD; systemId: string }[] = [];
   const systemDetailedGroups = new Map<string, THREE.Group>();
@@ -879,7 +879,7 @@ export function buildSpaceEnvironment(scene: THREE.Scene): SpaceEnvironment {
       planetGroup.position.set(planet.position[0], planet.position[1], planet.position[2]);
 
       if (planet.id === 'sol_black_hole') {
-        const bhMesh = buildBlackHoleAnomaly(planet.radius);
+        const bhMesh = buildBlackHoleAnomaly(planet.radius, system.id);
         planetGroup.add(bhMesh);
       } else if (planet.id === 'kronos_white_hole') {
         const whMesh = buildWhiteHoleAnomaly(planet.radius);
@@ -1683,7 +1683,7 @@ export function buildSpaceEnvironment(scene: THREE.Scene): SpaceEnvironment {
 
     // Animate wormholes, black hole lensing/disks, and nebulae in the active system only
     for (const anom of animatedAnomalies) {
-      if (anom.systemId !== currentActiveSystemId) continue;
+      if (anom.systemId && anom.systemId !== currentActiveSystemId) continue;
       if (anom.type === 'wormhole_outer' || anom.type === 'wormhole_inner') {
         anom.mesh.rotation.z += delta * anom.speed;
       } else if (anom.type === 'corona') {

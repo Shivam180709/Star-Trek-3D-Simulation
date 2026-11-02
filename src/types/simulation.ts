@@ -102,6 +102,7 @@ export interface AdaptiveCombatMetrics {
   winStreak: number;
   totalKills: number;
   playerAccuracyPercent: number;     // e.g. 78%
+  recentAccuracy?: number;           // Recent combat accuracy percentage
   damageEfficiencyRatio: number;     // damage dealt / damage taken
   adaptiveDamageMultiplier: number;  // 1.0 to 2.4x
   fleetIntelligenceTier: 'Standard' | 'Tactical' | 'Coordinated' | 'Predictive' | 'Apex Swarm';
