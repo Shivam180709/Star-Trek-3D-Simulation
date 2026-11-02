@@ -517,10 +517,16 @@ export class SimulationEngine {
     }
   };
 
+  private lastHoverRaycastMs = 0;
+
   private handlePointerMove = (e: PointerEvent) => {
     if (!this.isPointerDown) {
       // Hover highlight for all 3D Console controls & 3D Bridge Stations when inside Bridge Interior mode
       if (this.viewMode === 'interior_bridge' && this.renderer?.domElement && this.camera) {
+        const now = performance.now();
+        if (now - this.lastHoverRaycastMs < 32) return;
+        this.lastHoverRaycastMs = now;
+
         const rect = this.renderer.domElement.getBoundingClientRect();
         const mouse = new THREE.Vector2(
           ((e.clientX - rect.left) / rect.width) * 2 - 1,
@@ -586,10 +592,9 @@ export class SimulationEngine {
       this.orbitAngle.theta -= dx * 0.008;
       this.orbitAngle.phi = Math.max(0.05, Math.min(Math.PI * 0.95, this.orbitAngle.phi - dy * 0.008));
     } else if (this.viewMode === 'interior_bridge') {
-      // Natural 360-degree horizontal pan & vertical pitch look around the 3D bridge
-      // Dragging right moves the 3D view right; dragging up moves the 3D view up
+      // Natural 360-degree horizontal pan & full vertical pitch look around the 3D bridge (including up to the roof dome)
       this.bridgeLookAngle.yaw += dx * 0.0045;
-      this.bridgeLookAngle.pitch = Math.max(-0.95, Math.min(0.95, this.bridgeLookAngle.pitch + dy * 0.004));
+      this.bridgeLookAngle.pitch = Math.max(-1.45, Math.min(1.45, this.bridgeLookAngle.pitch + dy * 0.0045));
     } else {
       // Stable steering with damped sensitivity
       this.yawRate = THREE.MathUtils.clamp(this.yawRate - dx * 0.00018, -0.6, 0.6);
@@ -655,10 +660,11 @@ export class SimulationEngine {
       }
     }
 
-    // 2. Check celestial target meshes (planets, stars, starbases, spacedocks, anomalies)
+    // 2. Check celestial target meshes (planets, stars, starbases, spacedocks, anomalies) in the visible solar system
     const targetRoots: THREE.Object3D[] = [];
     const rootToId = new Map<THREE.Object3D, string>();
     for (const [id, mesh] of this.space.targetMeshes) {
+      if (!mesh.visible || (mesh.parent && !mesh.parent.visible)) continue;
       targetRoots.push(mesh);
       rootToId.set(mesh, id);
     }
@@ -3027,7 +3033,9 @@ export class SimulationEngine {
       }
     }
 
-    this.bridgeInterior.update(delta, this.alertLevel === 'red', this.isWarping);
+    if (this.viewMode === 'interior_bridge') {
+      this.bridgeInterior.update(delta, this.alertLevel === 'red', this.isWarping);
+    }
 
     // 6. Combat AI & Enemy Fleet Update with full 3D velocity vector for predictive lead-aiming
     this.combatManager.update(delta, this.position, this.velocity, this.currentSystemId, (damage) => {
@@ -3424,8 +3432,8 @@ export class SimulationEngine {
         const finalYaw = baseYaw - this.smoothedBridgeLookAngle.yaw;
         const finalPitch = THREE.MathUtils.clamp(
           basePitch + this.smoothedBridgeLookAngle.pitch,
-          -1.15,
-          1.15
+          -1.42,
+          1.42
         );
 
         const rotatedLookLocal = new THREE.Vector3(

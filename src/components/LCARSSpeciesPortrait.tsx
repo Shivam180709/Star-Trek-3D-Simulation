@@ -1,33 +1,33 @@
 import React, { useState } from 'react';
 import { StarTrekSpecies } from '../types/species';
-import { Shield, Sparkles, Volume2, Eye, Dna, Compass } from 'lucide-react';
+import { Eye, Dna } from 'lucide-react';
 import { soundEffects } from '../audio/soundEffects';
 
 interface LCARSSpeciesPortraitProps {
   species: StarTrekSpecies;
   size?: 'sm' | 'md' | 'lg' | 'xl';
   showTelemetry?: boolean;
-  onPlayVoiceBriefing?: () => void;
+  customImageSrc?: string;
 }
 
 export const LCARSSpeciesPortrait: React.FC<LCARSSpeciesPortraitProps> = ({
   species,
   size = 'md',
   showTelemetry = false,
-  onPlayVoiceBriefing,
+  customImageSrc,
 }) => {
   const [imgError, setImgError] = useState(false);
   const [viewMode, setViewMode] = useState<'photo' | 'biometric'>('photo');
-  const [activeImgSrc, setActiveImgSrc] = useState(species.images.primary);
+  const [activeImgSrc, setActiveImgSrc] = useState(customImageSrc || species.images.primary);
 
-  // Handle image fallback reset on species change
+  // Handle image fallback reset on species or custom image change
   React.useEffect(() => {
     setImgError(false);
-    setActiveImgSrc(species.images.primary);
-  }, [species.id, species.images.primary]);
+    setActiveImgSrc(customImageSrc || species.images.primary);
+  }, [species.id, species.images.primary, customImageSrc]);
 
   const handleImgError = () => {
-    if (activeImgSrc === species.images.primary && species.images.fallback) {
+    if (activeImgSrc !== species.images.fallback && species.images.fallback) {
       setActiveImgSrc(species.images.fallback);
     } else {
       setImgError(true);
@@ -35,8 +35,8 @@ export const LCARSSpeciesPortrait: React.FC<LCARSSpeciesPortraitProps> = ({
   };
 
   const sizeClasses = {
-    sm: 'w-16 h-16',
-    md: 'w-28 h-28 sm:w-36 sm:h-36',
+    sm: 'w-14 h-14',
+    md: 'w-28 h-28 sm:w-32 sm:h-32',
     lg: 'w-44 h-44 sm:w-56 sm:h-56',
     xl: 'w-56 h-56 sm:w-72 sm:h-72',
   }[size];
@@ -45,25 +45,25 @@ export const LCARSSpeciesPortrait: React.FC<LCARSSpeciesPortraitProps> = ({
   const getThemeColor = () => {
     switch (species.affiliation) {
       case 'United Federation of Planets':
-        return { primary: '#38bdf8', secondary: '#0284c7', text: 'text-sky-400', border: 'border-sky-500/50' };
+        return { primary: '#38bdf8', secondary: '#0284c7', text: 'text-sky-400', border: 'border-sky-500/40' };
       case 'Klingon Empire':
-        return { primary: '#ef4444', secondary: '#991b1b', text: 'text-red-400', border: 'border-red-500/50' };
+        return { primary: '#ef4444', secondary: '#991b1b', text: 'text-red-400', border: 'border-red-500/40' };
       case 'Romulan Star Empire':
-        return { primary: '#10b981', secondary: '#047857', text: 'text-emerald-400', border: 'border-emerald-500/50' };
+        return { primary: '#10b981', secondary: '#047857', text: 'text-emerald-400', border: 'border-emerald-500/40' };
       case 'Borg Collective':
-        return { primary: '#22c55e', secondary: '#15803d', text: 'text-green-400', border: 'border-green-500/50' };
+        return { primary: '#22c55e', secondary: '#15803d', text: 'text-green-400', border: 'border-green-500/40' };
       case 'Dominion':
-        return { primary: '#a855f7', secondary: '#7e22ce', text: 'text-purple-400', border: 'border-purple-500/50' };
+        return { primary: '#a855f7', secondary: '#7e22ce', text: 'text-purple-400', border: 'border-purple-500/40' };
       case 'Cardassian Union':
-        return { primary: '#f59e0b', secondary: '#b45309', text: 'text-amber-400', border: 'border-amber-500/50' };
+        return { primary: '#f59e0b', secondary: '#b45309', text: 'text-amber-400', border: 'border-amber-500/40' };
       case 'Ferengi Alliance':
-        return { primary: '#fbbf24', secondary: '#d97706', text: 'text-yellow-400', border: 'border-yellow-500/50' };
+        return { primary: '#fbbf24', secondary: '#d97706', text: 'text-yellow-400', border: 'border-yellow-500/40' };
       case 'Gorn Hegemony':
-        return { primary: '#84cc16', secondary: '#4d7c0f', text: 'text-lime-400', border: 'border-lime-500/50' };
+        return { primary: '#84cc16', secondary: '#4d7c0f', text: 'text-lime-400', border: 'border-lime-500/40' };
       case 'Tholian Assembly':
-        return { primary: '#f97316', secondary: '#c2410c', text: 'text-orange-400', border: 'border-orange-500/50' };
+        return { primary: '#f97316', secondary: '#c2410c', text: 'text-orange-400', border: 'border-orange-500/40' };
       default:
-        return { primary: '#38bdf8', secondary: '#0284c7', text: 'text-sky-400', border: 'border-sky-500/50' };
+        return { primary: '#38bdf8', secondary: '#0284c7', text: 'text-sky-400', border: 'border-sky-500/40' };
     }
   };
 
@@ -102,6 +102,23 @@ export const LCARSSpeciesPortrait: React.FC<LCARSSpeciesPortraitProps> = ({
         <line x1="175" y1="100" x2="195" y2="100" stroke={theme.primary} strokeWidth="1.5" strokeOpacity="0.6" />
 
         {/* SPECIES SPECIFIC ANATOMICAL WIREFRAME */}
+        {id === 'human' && (
+          <g transform="translate(100, 100)">
+            {/* Terran Cranial & Neural Profile */}
+            <path d="M -27,-42 C -24,-62 24,-62 27,-42 C 34,-18 29,24 20,44 C 7,54 -7,54 -20,44 C -29,24 -34,-18 -27,-42 Z" fill="#082f49" stroke="#38bdf8" strokeWidth="2" />
+            {/* Rounded Human Auricles */}
+            <path d="M -28,-22 C -35,-24 -35,-4 -28,-6" fill="none" stroke="#38bdf8" strokeWidth="1.8" />
+            <path d="M 28,-22 C 35,-24 35,-4 28,-6" fill="none" stroke="#38bdf8" strokeWidth="1.8" />
+            {/* Optical & Brow Lines */}
+            <path d="M -20,-18 Q -12,-21 -5,-18 M 20,-18 Q 12,-21 5,-18" stroke="#bae6fd" strokeWidth="2" fill="none" />
+            <circle cx="-12" cy="-10" r="2.5" fill="#38bdf8" />
+            <circle cx="12" cy="-10" r="2.5" fill="#38bdf8" />
+            <line x1="-8" y1="22" x2="8" y2="22" stroke="#bae6fd" strokeWidth="1.5" />
+            {/* Starfleet Delta Emblem Accent */}
+            <path d="M 0,-86 L -10,-64 L 0,-70 L 10,-64 Z" fill="none" stroke="#f59e0b" strokeWidth="1.8" />
+          </g>
+        )}
+
         {id === 'klingon' && (
           <g transform="translate(100, 100)">
             {/* Klingon Cranial Ridges & Head */}
@@ -251,7 +268,7 @@ export const LCARSSpeciesPortrait: React.FC<LCARSSpeciesPortraitProps> = ({
         )}
 
         {/* DEFAULT / OTHER SPECIES ANATOMICAL OUTLINE */}
-        {!['klingon', 'vulcan', 'romulan', 'borg', 'gorn', 'ferengi', 'andorian', 'cardassian'].includes(id) && (
+        {!['human', 'klingon', 'vulcan', 'romulan', 'borg', 'gorn', 'ferengi', 'andorian', 'cardassian'].includes(id) && (
           <g transform="translate(100, 100)">
             {/* General Humanoid / Exobiological Silhouette */}
             <path d="M -26,-40 C -22,-60 22,-60 26,-40 C 32,-15 28,25 20,45 C 5,55 -5,55 -20,45 C -28,25 -32,-15 -26,-40 Z" fill="#0f172a" stroke={theme.primary} strokeWidth="2" />
@@ -284,7 +301,7 @@ export const LCARSSpeciesPortrait: React.FC<LCARSSpeciesPortraitProps> = ({
     <div className="flex flex-col items-center">
       {/* Visual Frame */}
       <div
-        className={`relative ${sizeClasses} rounded-xl overflow-hidden bg-slate-950 border-2 ${theme.border} shadow-xl flex items-center justify-center group`}
+        className={`relative ${sizeClasses} rounded-lg overflow-hidden bg-slate-950 border ${theme.border} flex items-center justify-center group`}
       >
         {/* Toggle between Photograph and Biometric Scan if image is available */}
         {activeImgSrc && !imgError && viewMode === 'photo' ? (
@@ -296,46 +313,36 @@ export const LCARSSpeciesPortrait: React.FC<LCARSSpeciesPortraitProps> = ({
               className="w-full h-full object-cover object-top transition-transform duration-300 group-hover:scale-105"
               onError={handleImgError}
             />
-            {/* CRT Scanline & LCARS Vignette Overlay */}
-            <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-transparent opacity-60 pointer-events-none" />
-            <div className="absolute top-1.5 left-1.5 px-1 py-0.5 rounded bg-slate-950/80 border border-sky-500/30 text-[9px] font-mono-nums text-sky-400">
-              OPTICAL
-            </div>
+            <div className="absolute inset-0 bg-gradient-to-t from-slate-950/75 via-transparent to-transparent pointer-events-none" />
+            {size !== 'sm' && (
+              <div className="absolute top-1.5 left-1.5 px-1.5 py-0.5 bg-slate-950/85 border border-slate-700/80 text-[9px] font-mono tabular-nums text-sky-400 tracking-wider">
+                OPTICAL
+              </div>
+            )}
           </>
         ) : (
           renderBiometricVector()
         )}
 
-        {/* Controls Overlay on hover/focus */}
-        <div className="absolute top-1 right-1 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity bg-slate-950/80 p-0.5 rounded border border-slate-700">
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              soundEffects.playLcarsBeep(750, 0.05);
-              setViewMode((prev) => (prev === 'photo' ? 'biometric' : 'photo'));
-            }}
-            className="p-1 text-slate-300 hover:text-amber-400 transition-colors"
-            title={viewMode === 'photo' ? 'Switch to Biometric Wireframe Scan' : 'Switch to Photographic Dossier'}
-          >
-            {viewMode === 'photo' ? <Dna className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
-          </button>
-          {onPlayVoiceBriefing && (
+        {/* Biometric Toggle Control on hover/focus (only on md+ sizes) */}
+        {size !== 'sm' && (
+          <div className="absolute top-1.5 right-1.5 flex items-center opacity-0 group-hover:opacity-100 transition-opacity bg-slate-950/85 p-0.5 rounded border border-slate-700">
             <button
               onClick={(e) => {
                 e.stopPropagation();
-                soundEffects.playLcarsBeep(980, 0.06);
-                onPlayVoiceBriefing();
+                soundEffects.playLcarsBeep(750, 0.05);
+                setViewMode((prev) => (prev === 'photo' ? 'biometric' : 'photo'));
               }}
-              className="p-1 text-slate-300 hover:text-sky-400 transition-colors"
-              title="Vocal Computer Dossier Briefing"
+              className="p-1 text-slate-300 hover:text-amber-400 transition-colors cursor-pointer"
+              title={viewMode === 'photo' ? 'Switch to Biometric Wireframe Scan' : 'Switch to Photographic Dossier'}
             >
-              <Volume2 className="w-3.5 h-3.5" />
+              {viewMode === 'photo' ? <Dna className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
             </button>
-          )}
-        </div>
+          </div>
+        )}
 
-        {/* Affiliation Badge on Bottom Right */}
-        <div className="absolute bottom-1 right-1 px-1.5 py-0.5 rounded bg-slate-950/90 border border-slate-800 text-[9px] font-trek uppercase font-bold text-slate-300">
+        {/* Rank Telemetry Readout on Bottom Right */}
+        <div className="absolute bottom-1 right-1 px-1 py-0.2 bg-slate-950/90 border border-slate-800 text-[9px] font-mono tabular-nums text-slate-300">
           #{species.popularityRank}
         </div>
       </div>
@@ -346,7 +353,7 @@ export const LCARSSpeciesPortrait: React.FC<LCARSSpeciesPortraitProps> = ({
           <div className="text-xs font-trek uppercase font-bold text-amber-400 truncate">
             {species.name}
           </div>
-          <div className="text-[10px] text-slate-400 font-mono-nums truncate">
+          <div className="text-[10px] text-slate-400 font-mono tabular-nums truncate">
             {species.homeworld.name} · {species.quadrant.split(' ')[0]}
           </div>
         </div>

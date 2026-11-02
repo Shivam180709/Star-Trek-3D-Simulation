@@ -718,14 +718,27 @@ export function buildSpaceEnvironment(scene: THREE.Scene): SpaceEnvironment {
   // 5. Build Primary Stars, Planets, Space Stations, Nebulae & Anomalies across all 40 Systems
   // Core rule: Each solar system is isolated and separated. Only the active solar system is visible!
   const targetMeshes = new Map<string, THREE.Object3D>();
-  const animatedAnomalies: { mesh: THREE.Object3D; speed: number; type: string }[] = [];
+  const animatedAnomalies: { mesh: THREE.Object3D; speed: number; type: string; systemId: string }[] = [];
   const allPlanets: PlanetData[] = [];
-  const activeLODObjects: THREE.LOD[] = [];
+  const activeLODObjects: { lod: THREE.LOD; systemId: string }[] = [];
   const systemDetailedGroups = new Map<string, THREE.Group>();
+  const systemHydrators = new Map<string, (() => void)[]>();
+  const hydratedSystems = new Set<string>();
   let currentActiveSystemId = 'sol_system';
+
+  const hydrateSystemTextures = (systemId: string) => {
+    if (hydratedSystems.has(systemId)) return;
+    hydratedSystems.add(systemId);
+    const callbacks = systemHydrators.get(systemId);
+    if (callbacks) {
+      for (const fn of callbacks) fn();
+      systemHydrators.delete(systemId);
+    }
+  };
 
   const setActiveSystem = (systemId: string) => {
     currentActiveSystemId = systemId;
+    hydrateSystemTextures(systemId);
     for (const [id, group] of systemDetailedGroups) {
       group.visible = (id === currentActiveSystemId);
     }
@@ -734,12 +747,19 @@ export function buildSpaceEnvironment(scene: THREE.Scene): SpaceEnvironment {
   for (const system of STAR_TREK_SOLAR_SYSTEMS) {
     const starColor = getSystemStarColor(system.id);
     const [cx, cy, cz] = system.centerCoordinates;
+    const isInitialActiveSystem = system.id === currentActiveSystemId;
+    const hydratorList: (() => void)[] = [];
+    if (!isInitialActiveSystem) {
+      systemHydrators.set(system.id, hydratorList);
+    } else {
+      hydratedSystems.add(system.id);
+    }
 
     // Isolated system group: Only the current active solar system is visible!
     const systemDetailedGroup = new THREE.Group();
     systemDetailedGroup.name = `system_${system.id}`;
     // Sol system is visible by default at launch; all other systems hidden until warp arrival
-    systemDetailedGroup.visible = (system.id === currentActiveSystemId);
+    systemDetailedGroup.visible = isInitialActiveSystem;
     scene.add(systemDetailedGroup);
     systemDetailedGroups.set(system.id, systemDetailedGroup);
 
@@ -757,14 +777,22 @@ export function buildSpaceEnvironment(scene: THREE.Scene): SpaceEnvironment {
         : 135;
 
       // Star Photosphere Core with Detailed Procedural Granulation & Sunspot Texture
-      const starPhotosphereTex = createStarPhotosphereTexture(system.spectralType, starColor);
       const starCoreGeo = new THREE.SphereGeometry(starRadius, 40, 32);
       const starCoreMat = new THREE.MeshBasicMaterial({
-        map: starPhotosphereTex,
+        color: isInitialActiveSystem ? 0xffffff : starColor,
       });
+      if (isInitialActiveSystem) {
+        starCoreMat.map = createStarPhotosphereTexture(system.spectralType, starColor);
+      } else {
+        hydratorList.push(() => {
+          starCoreMat.color.setHex(0xffffff);
+          starCoreMat.map = createStarPhotosphereTexture(system.spectralType, starColor);
+          starCoreMat.needsUpdate = true;
+        });
+      }
       const starCoreMesh = new THREE.Mesh(starCoreGeo, starCoreMat);
       starGroup.add(starCoreMesh);
-      animatedAnomalies.push({ mesh: starCoreMesh, speed: 0.016, type: 'corona' });
+      animatedAnomalies.push({ mesh: starCoreMesh, speed: 0.016, type: 'corona', systemId: system.id });
 
       // Tasteful, Subtle Solar Corona Shell
       const coronaGeo = new THREE.SphereGeometry(starRadius * 1.09, 28, 20);
@@ -777,7 +805,7 @@ export function buildSpaceEnvironment(scene: THREE.Scene): SpaceEnvironment {
       });
       const coronaMesh = new THREE.Mesh(coronaGeo, coronaMat);
       starGroup.add(coronaMesh);
-      animatedAnomalies.push({ mesh: coronaMesh, speed: 0.04, type: 'corona' });
+      animatedAnomalies.push({ mesh: coronaMesh, speed: 0.04, type: 'corona', systemId: system.id });
 
       // 5B. Concentric Planetary Orbit Trajectory Guides (Matching authentic solar system schematic)
       for (const planet of system.planets) {
@@ -898,8 +926,8 @@ export function buildSpaceEnvironment(scene: THREE.Scene): SpaceEnvironment {
         const coreFlare = new THREE.Mesh(coreFlareGeo, new THREE.MeshBasicMaterial({ color: 0xffffff }));
         planetGroup.add(coreFlare);
 
-        animatedAnomalies.push({ mesh: outerDisc, speed: 0.8, type: 'wormhole_outer' });
-        animatedAnomalies.push({ mesh: innerDisc, speed: -1.2, type: 'wormhole_inner' });
+        animatedAnomalies.push({ mesh: outerDisc, speed: 0.8, type: 'wormhole_outer', systemId: system.id });
+        animatedAnomalies.push({ mesh: innerDisc, speed: -1.2, type: 'wormhole_inner', systemId: system.id });
       } else if (planet.type === 'nebula') {
         // Volumetric Multi-Layered Cosmic Gas Nebula Cloud (Mutara / Badlands / Briar Patch)
         const cloudRadius = planet.radius * 2.4;
@@ -947,7 +975,7 @@ export function buildSpaceEnvironment(scene: THREE.Scene): SpaceEnvironment {
         const particles = new THREE.Points(partGeo, partMat);
         planetGroup.add(particles);
 
-        animatedAnomalies.push({ mesh: planetGroup, speed: 0.05, type: 'nebula' });
+        animatedAnomalies.push({ mesh: planetGroup, speed: 0.05, type: 'nebula', systemId: system.id });
       } else if (planet.id === 'caretaker_array') {
         // The Caretaker Array Megastructure (Nacene Displacement Emitter)
         const coreGeo = new THREE.CylinderGeometry(planet.radius * 0.4, planet.radius * 0.6, planet.radius * 1.5, 16);
@@ -1023,15 +1051,22 @@ export function buildSpaceEnvironment(scene: THREE.Scene): SpaceEnvironment {
         const isMoon = planet.type === 'moon';
         const isGasGiant = planet.type === 'gas_giant';
         const isSolPlanet = planet.id.startsWith('sol_');
-        const tex = createPlanetTexture(planet.type, planet.textureColor, planet.id);
-        const bumpTex = createPlanetBumpTexture(planet.type, planet.id);
         const sphereMat = new THREE.MeshStandardMaterial({
-          map: tex,
-          bumpMap: bumpTex,
-          bumpScale: isGasGiant ? 0.35 : isMoon ? 1.85 : planet.type === 'ocean' ? 0.45 : 1.35,
-          roughness: isGasGiant ? 0.78 : isMoon ? 0.86 : planet.type === 'ocean' ? 0.28 : 0.54,
-          metalness: planet.type === 'ocean' ? 0.22 : 0.08,
+          bumpScale: planet.id === 'sol_moon' ? 2.45 : isMoon ? 1.95 : isGasGiant ? 0.35 : planet.type === 'ocean' ? 0.45 : 1.35,
+          roughness: isMoon ? 0.93 : isGasGiant ? 0.78 : planet.type === 'ocean' ? 0.28 : 0.54,
+          metalness: isMoon ? 0.02 : planet.type === 'ocean' ? 0.22 : 0.08,
         });
+
+        if (isInitialActiveSystem) {
+          sphereMat.map = createPlanetTexture(planet.type, planet.textureColor, planet.id);
+          sphereMat.bumpMap = createPlanetBumpTexture(planet.type, planet.id);
+        } else {
+          hydratorList.push(() => {
+            sphereMat.map = createPlanetTexture(planet.type, planet.textureColor, planet.id);
+            sphereMat.bumpMap = createPlanetBumpTexture(planet.type, planet.id);
+            sphereMat.needsUpdate = true;
+          });
+        }
 
         // Planetary LOD System: Slashes vertex count during high-speed flight and distant combat
         const planetLOD = new THREE.LOD();
@@ -1040,8 +1075,8 @@ export function buildSpaceEnvironment(scene: THREE.Scene): SpaceEnvironment {
         const highDetailPlanetGroup = new THREE.Group();
         const sphereGeoHigh = new THREE.SphereGeometry(
           planet.radius,
-          isSolPlanet ? 64 : isGasGiant ? 48 : isMoon ? 32 : 40,
-          isSolPlanet ? 48 : isGasGiant ? 36 : isMoon ? 24 : 30
+          isSolPlanet ? 64 : isGasGiant ? 48 : isMoon ? 40 : 40,
+          isSolPlanet ? 48 : isGasGiant ? 36 : isMoon ? 30 : 30
         );
         const sphereHigh = new THREE.Mesh(sphereGeoHigh, sphereMat);
         if (planet.id === 'sol_saturn') {
@@ -1049,7 +1084,7 @@ export function buildSpaceEnvironment(scene: THREE.Scene): SpaceEnvironment {
           sphereHigh.rotation.z = -0.38;
         }
         highDetailPlanetGroup.add(sphereHigh);
-        animatedAnomalies.push({ mesh: sphereHigh, speed: isMoon ? 0.008 : 0.022, type: 'corona' });
+        animatedAnomalies.push({ mesh: sphereHigh, speed: isMoon ? 0.008 : 0.022, type: 'corona', systemId: system.id });
 
         // Dedicated 3D Atmospheric Cloud Layer for Earth (`./assets/planets/earth_clouds.jpg`)
         if (planet.id === 'sol_earth') {
@@ -1071,7 +1106,7 @@ export function buildSpaceEnvironment(scene: THREE.Scene): SpaceEnvironment {
             cloudMat
           );
           highDetailPlanetGroup.add(cloudSphere);
-          animatedAnomalies.push({ mesh: cloudSphere, speed: 0.032, type: 'corona' });
+          animatedAnomalies.push({ mesh: cloudSphere, speed: 0.032, type: 'corona', systemId: system.id });
         }
 
         // Subtle Atmospheric Rim Glow for terrestrial planets with atmosphereColor
@@ -1090,11 +1125,9 @@ export function buildSpaceEnvironment(scene: THREE.Scene): SpaceEnvironment {
 
         // High-Detail Concentric Planetary Rings with Cassini Division Texture
         if (planet.hasRings && planet.ringInner && planet.ringOuter) {
-          const ringTex = createPlanetaryRingTexture(planet.ringColor || '#fed7aa', planet.id);
           const ringSize = planet.ringOuter * 2.18;
           const ringGeo = new THREE.PlaneGeometry(ringSize, ringSize);
           const ringMat = new THREE.MeshStandardMaterial({
-            map: ringTex,
             side: THREE.DoubleSide,
             transparent: true,
             opacity: 0.95,
@@ -1102,6 +1135,14 @@ export function buildSpaceEnvironment(scene: THREE.Scene): SpaceEnvironment {
             metalness: 0.15,
             depthWrite: false,
           });
+          if (isInitialActiveSystem) {
+            ringMat.map = createPlanetaryRingTexture(planet.ringColor || '#fed7aa', planet.id);
+          } else {
+            hydratorList.push(() => {
+              ringMat.map = createPlanetaryRingTexture(planet.ringColor || '#fed7aa', planet.id);
+              ringMat.needsUpdate = true;
+            });
+          }
           const ring = new THREE.Mesh(ringGeo, ringMat);
           if (planet.id === 'sol_saturn') {
             // Match the sweeping diagonal ring angle of the user's attached Saturn reference image (`images.jpg`)
@@ -1145,7 +1186,7 @@ export function buildSpaceEnvironment(scene: THREE.Scene): SpaceEnvironment {
         planetLOD.addLevel(lowDetailPlanetGroup, 2200);
 
         planetGroup.add(planetLOD);
-        activeLODObjects.push(planetLOD);
+        activeLODObjects.push({ lod: planetLOD, systemId: system.id });
       }
 
       if (planet.type === 'starbase' && !planet.parentPlanetId) {
@@ -1632,6 +1673,7 @@ export function buildSpaceEnvironment(scene: THREE.Scene): SpaceEnvironment {
     const sx = shipPosition.x;
     const sz = shipPosition.z;
     for (const [, mesh] of targetMeshes) {
+      if (mesh.parent && !mesh.parent.visible) continue;
       const dx = mesh.position.x - sx;
       const dz = mesh.position.z - sz;
       if (dx * dx + dz * dz < 81000000) {
@@ -1639,8 +1681,9 @@ export function buildSpaceEnvironment(scene: THREE.Scene): SpaceEnvironment {
       }
     }
 
-    // Animate wormholes, black hole lensing/disks, and nebulae
+    // Animate wormholes, black hole lensing/disks, and nebulae in the active system only
     for (const anom of animatedAnomalies) {
+      if (anom.systemId !== currentActiveSystemId) continue;
       if (anom.type === 'wormhole_outer' || anom.type === 'wormhole_inner') {
         anom.mesh.rotation.z += delta * anom.speed;
       } else if (anom.type === 'corona') {
@@ -1648,12 +1691,15 @@ export function buildSpaceEnvironment(scene: THREE.Scene): SpaceEnvironment {
       }
     }
 
-    // Update active dynamic Level of Detail (LOD) objects with camera
+    // Update active dynamic Level of Detail (LOD) objects with camera in the active system only
     if (camera) {
       const cam = (camera as any).isCamera ? (camera as THREE.Camera) : null;
       if (cam) {
         for (let i = 0; i < activeLODObjects.length; i++) {
-          activeLODObjects[i].update(cam);
+          const item = activeLODObjects[i];
+          if (item.systemId === currentActiveSystemId) {
+            item.lod.update(cam);
+          }
         }
       }
     }

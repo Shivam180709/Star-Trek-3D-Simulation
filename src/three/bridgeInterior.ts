@@ -1532,31 +1532,171 @@ export function buildBridgeInterior(): BridgeInteriorComponents {
   buildSegmentedSafetyRailing([1.05, 1.38, 1.72, 2.02]);
 
   // ---------------------------------------------------------------------------
-  // 3. 12-SIDED BRUSHED METALLIC OUTER BULKHEADS & RECESSED TURBOLIFT ALCOVE
+  // 3. 12-SIDED BRUSHED METALLIC OUTER BULKHEADS, ARCHITECTURAL CEILING DOME
+  //    (ROOF WITH 12 RADIAL RIBS & CENTRAL SKYLIGHT OCULUS) & TURBOLIFT ALCOVE
   // ---------------------------------------------------------------------------
+  brushedSilverBulkheadMat.side = THREE.DoubleSide;
+  recessedMonitorFrameMat.side = THREE.DoubleSide;
+
   // Outer 12-sided polygonal structural rim & wall
   const outerWall = new THREE.Mesh(
     new THREE.CylinderGeometry(bridgeRadius + 0.45, bridgeRadius + 0.45, bridgeHeight, 12, 1, true),
     brushedSilverBulkheadMat
   );
-  outerWall.material.side = THREE.BackSide;
   outerWall.position.y = bridgeHeight / 2;
   outerWall.rotation.y = Math.PI / 12;
   root.add(outerWall);
 
-  // Upper 12-sided brushed metallic crown ring capping the bulkheads
-  const crownRing = new THREE.Mesh(
-    new THREE.RingGeometry(bridgeRadius - 0.65, bridgeRadius + 0.65, 12, 1),
-    brushedSilverBulkheadMat
+  // --- COMPLETE 3D BRIDGE ROOF / OVERHEAD CEILING DOME ASSEMBLY ---
+  const ceilingGroup = new THREE.Group();
+  ceilingGroup.name = 'BridgeCeilingRoofDome';
+
+  // 1. Outer 12-Sided Recessed Soffit Ring (from outer wall r=13.1m inward to r=7.6m at y=bridgeHeight)
+  const outerSoffitMat = new THREE.MeshStandardMaterial({
+    color: 0x3b4454,
+    metalness: 0.62,
+    roughness: 0.38,
+    side: THREE.DoubleSide,
+  });
+  const outerCeilingRing = new THREE.Mesh(
+    new THREE.RingGeometry(7.5, bridgeRadius + 0.65, 12, 1),
+    outerSoffitMat
   );
-  crownRing.rotation.x = Math.PI / 2;
-  crownRing.rotation.z = Math.PI / 12;
-  crownRing.position.y = bridgeHeight;
-  root.add(crownRing);
+  outerCeilingRing.rotation.x = Math.PI / 2;
+  outerCeilingRing.rotation.z = Math.PI / 12;
+  outerCeilingRing.position.y = bridgeHeight;
+  ceilingGroup.add(outerCeilingRing);
+
+  // 2. Illuminated Perimeter Cove Light Ring (at r=7.55m, y=bridgeHeight - 0.04m)
+  const ceilingCoveGlowMat = new THREE.MeshBasicMaterial({
+    color: 0xbae6fd,
+    side: THREE.DoubleSide,
+  });
+  const outerCoveLightRing = new THREE.Mesh(
+    new THREE.RingGeometry(7.25, 7.6, 24, 1),
+    ceilingCoveGlowMat
+  );
+  outerCoveLightRing.rotation.x = Math.PI / 2;
+  outerCoveLightRing.position.y = bridgeHeight - 0.03;
+  ceilingGroup.add(outerCoveLightRing);
+
+  // 3. Upper Vaulted Bridge Roof Dome (enclosing the entire bridge overhead from r=7.6m up to apex y=6.85m)
+  const upperDomeMat = new THREE.MeshStandardMaterial({
+    color: 0x262d3a,
+    metalness: 0.55,
+    roughness: 0.45,
+    side: THREE.DoubleSide,
+  });
+  const upperRoofVault = new THREE.Mesh(
+    new THREE.CylinderGeometry(3.4, 7.65, 1.35, 24, 1, true),
+    upperDomeMat
+  );
+  upperRoofVault.position.y = bridgeHeight + 0.67;
+  ceilingGroup.add(upperRoofVault);
+
+  // Solid Top Cap above the central skylight oculus so zero external stars/skybox ever leak through the roof
+  const roofTopCap = new THREE.Mesh(
+    new THREE.CircleGeometry(3.55, 24),
+    new THREE.MeshStandardMaterial({
+      color: 0x1e2530,
+      metalness: 0.6,
+      roughness: 0.35,
+      side: THREE.DoubleSide,
+    })
+  );
+  roofTopCap.rotation.x = Math.PI / 2;
+  roofTopCap.position.y = bridgeHeight + 1.36;
+  ceilingGroup.add(roofTopCap);
+
+  // 4. 12 Radial Structural Ceiling Ribs / Arch Girders (spanning from the 12 bulkhead corners to the central oculus)
+  const ribGirderMat = new THREE.MeshStandardMaterial({
+    color: 0x94a3b8,
+    metalness: 0.72,
+    roughness: 0.28,
+  });
+  for (let i = 0; i < 12; i++) {
+    const angle = (i / 12) * Math.PI * 2 + Math.PI / 12;
+    const ribGroup = new THREE.Group();
+    ribGroup.rotation.y = angle;
+
+    // Lower horizontal soffit beam (from r=7.5m to r=12.6m at y=bridgeHeight - 0.08m)
+    const lowerBeam = new THREE.Mesh(
+      new THREE.BoxGeometry(0.28, 0.18, 5.2),
+      ribGirderMat
+    );
+    lowerBeam.position.set(0, bridgeHeight - 0.08, 10.05);
+    ribGroup.add(lowerBeam);
+
+    // Angled upper vault girder (rising from r=7.5m, y=5.4m to r=3.3m, y=6.72m)
+    const upperBeam = new THREE.Mesh(
+      new THREE.BoxGeometry(0.24, 0.16, 4.45),
+      ribGirderMat
+    );
+    upperBeam.position.set(0, bridgeHeight + 0.66, 5.4);
+    upperBeam.rotation.x = 0.305;
+    ribGroup.add(upperBeam);
+
+    // Glowing cyan/warm LED strip along the underside of each radial rib
+    const ribLightStrip = new THREE.Mesh(
+      new THREE.BoxGeometry(0.08, 0.03, 4.8),
+      new THREE.MeshBasicMaterial({ color: 0xe0f2fe })
+    );
+    ribLightStrip.position.set(0, bridgeHeight - 0.18, 10.0);
+    ribGroup.add(ribLightStrip);
+
+    ceilingGroup.add(ribGroup);
+  }
+
+  // 5. Concentric Architectural Compression Rings & Central Illuminated Skylight Oculus
+  const oculusRim = new THREE.Mesh(
+    new THREE.TorusGeometry(3.38, 0.14, 12, 36),
+    ribGirderMat
+  );
+  oculusRim.rotation.x = Math.PI / 2;
+  oculusRim.position.y = bridgeHeight + 1.28;
+  ceilingGroup.add(oculusRim);
+
+  const midVaultRim = new THREE.Mesh(
+    new THREE.TorusGeometry(5.5, 0.1, 10, 36),
+    ribGirderMat
+  );
+  midVaultRim.rotation.x = Math.PI / 2;
+  midVaultRim.position.y = bridgeHeight + 0.65;
+  ceilingGroup.add(midVaultRim);
+
+  // Frosted Illuminated Central Skylight Diffuser Disc (glows warm daylight in normal cruise, pulses red in Red Alert!)
+  const skylightDiffuserMat = new THREE.MeshBasicMaterial({
+    color: 0xf8fafc,
+    side: THREE.DoubleSide,
+  });
+  const skylightDisc = new THREE.Mesh(
+    new THREE.RingGeometry(0.85, 3.32, 32, 1),
+    skylightDiffuserMat
+  );
+  skylightDisc.rotation.x = Math.PI / 2;
+  skylightDisc.position.y = bridgeHeight + 1.32;
+  ceilingGroup.add(skylightDisc);
+
+  // Central Overhead Sensor & Astrometric Hub Core inside the Skylight Oculus
+  const oculusCenterHub = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.88, 0.65, 0.28, 24),
+    darkPedestalMat
+  );
+  oculusCenterHub.position.y = bridgeHeight + 1.24;
+  ceilingGroup.add(oculusCenterHub);
+
+  const oculusCenterBeacon = new THREE.Mesh(
+    new THREE.SphereGeometry(0.32, 16, 12),
+    new THREE.MeshBasicMaterial({ color: 0x38bdf8 })
+  );
+  oculusCenterBeacon.position.y = bridgeHeight + 1.08;
+  ceilingGroup.add(oculusCenterBeacon);
+
+  root.add(ceilingGroup);
 
   // Ambient lighting inside the bridge so brushed silver & satin metallic mannequins gleam at 60 FPS
   const overheadDomeLight = new THREE.PointLight(0xf1f5f9, 3.2, 42);
-  overheadDomeLight.position.set(0, bridgeHeight + 2.2, 0);
+  overheadDomeLight.position.set(0, bridgeHeight + 0.9, 0);
   root.add(overheadDomeLight);
 
   const bridgeHemiLight = new THREE.HemisphereLight(0xe2e8f0, 0x1e293b, 1.35);
@@ -5269,6 +5409,45 @@ export function buildBridgeInterior(): BridgeInteriorComponents {
         rig.group.visible = rig.primarySeatStationId !== activeStationId;
       }
     }
+    if (root.visible) {
+      redrawAll3DConsoles();
+      consolesDirty = false;
+    } else {
+      consolesDirty = true;
+    }
+  };
+
+  let consolesDirty = false;
+  let lastTelemetryConsoleRedrawMs = 0;
+
+  const redrawActiveStationConsoles = () => {
+    redrawViewscreen3DOverlay();
+    switch (activeStationId) {
+      case 'captain':
+        redrawCaptainLeftArmrest();
+        redrawCaptainRightArmrest();
+        redrawSulu3DConsole();
+        break;
+      case 'helm':
+        redrawSulu3DConsole();
+        break;
+      case 'science':
+        redrawScience3DStation();
+        break;
+      case 'tactical':
+        redrawTactical3DStation();
+        break;
+      case 'comms':
+        redrawComms3DStation();
+        break;
+      case 'engineering':
+        redrawEngineering3DStation();
+        break;
+      case 'overview':
+      default:
+        redrawAll3DConsoles();
+        break;
+    }
   };
 
   // Initialize visibility for default 'captain' station
@@ -5279,13 +5458,21 @@ export function buildBridgeInterior(): BridgeInteriorComponents {
     hw.viewscreenZoom = clamped;
     viewscreenCamera.fov = 52 / clamped;
     viewscreenCamera.updateProjectionMatrix();
-    redrawViewscreen3DOverlay();
+    if (root.visible) {
+      redrawViewscreen3DOverlay();
+    } else {
+      consolesDirty = true;
+    }
   };
 
   const setHoveredControl = (controlId: string | null) => {
     if (hoveredControlId !== controlId) {
       hoveredControlId = controlId;
-      redrawAll3DConsoles();
+      if (root.visible) {
+        redrawActiveStationConsoles();
+      } else {
+        consolesDirty = true;
+      }
     }
   };
 
@@ -5304,22 +5491,48 @@ export function buildBridgeInterior(): BridgeInteriorComponents {
       }
     }
     if (changed) {
-      redrawAll3DConsoles();
+      if (!root.visible) {
+        consolesDirty = true;
+        return;
+      }
+      const now = performance.now();
+      if (now - lastTelemetryConsoleRedrawMs >= 90) {
+        lastTelemetryConsoleRedrawMs = now;
+        consolesDirty = false;
+        redrawActiveStationConsoles();
+      } else {
+        consolesDirty = true;
+      }
     }
   };
 
   let lastOscilloscopeRedraw = 0;
 
   const update = (delta: number, isRedAlert: boolean, isWarping: boolean) => {
+    if (!root.visible) return;
+
+    if (consolesDirty) {
+      const now = performance.now();
+      if (now - lastTelemetryConsoleRedrawMs >= 90) {
+        lastTelemetryConsoleRedrawMs = now;
+        consolesDirty = false;
+        redrawAll3DConsoles();
+      }
+    }
+
     animClock += delta;
 
     if (isRedAlert) {
       const pulse = (Math.sin(animClock * 7.5) + 1) * 0.5;
       alertRedLight.intensity = 1.2 + pulse * 2.2;
       overheadDomeLight.intensity = 1.6 + (1 - pulse) * 0.9;
+      skylightDiffuserMat.color.setHex(pulse > 0.45 ? 0xef4444 : 0x7f1d1d);
+      ceilingCoveGlowMat.color.setHex(pulse > 0.45 ? 0xf87171 : 0x991b1b);
     } else {
       alertRedLight.intensity = 0;
       overheadDomeLight.intensity = isWarping ? 3.5 : 3.0;
+      skylightDiffuserMat.color.setHex(0xf8fafc);
+      ceilingCoveGlowMat.color.setHex(0xbae6fd);
     }
 
     // Subtle idle animations on all articulated Starfleet crew figures (head turns, breathing, console operation)
@@ -5334,7 +5547,7 @@ export function buildBridgeInterior(): BridgeInteriorComponents {
 
     // Live animation refresh for Perimeter Middle Fascia Status Matrix, Rotating Moiré Sensor Wheel,
     // Science Oscilloscope, and Comms Waveform
-    if (animClock - lastOscilloscopeRedraw > 0.08) {
+    if (animClock - lastOscilloscopeRedraw > 0.10) {
       lastOscilloscopeRedraw = animClock;
       redrawMidFasciaMatrix(animClock);
       redrawMoireScope(animClock);

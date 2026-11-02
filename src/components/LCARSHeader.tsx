@@ -22,6 +22,7 @@ interface LCARSHeaderProps {
   onOpenPlanetaryScanner?: () => void;
   onToggleMissions?: () => void;
   onOpenOfficerProfile?: () => void;
+  onOpenCommendation?: () => void;
   onToggleBridgeInterior?: () => void;
   isBridgeInteriorActive?: boolean;
   isMissionsOpen?: boolean;
@@ -55,6 +56,7 @@ export const LCARSHeader: React.FC<LCARSHeaderProps> = ({
   onOpenPlanetaryScanner,
   onToggleMissions,
   onOpenOfficerProfile,
+  onOpenCommendation,
   onToggleBridgeInterior,
   isBridgeInteriorActive = false,
   isMissionsOpen = false,
@@ -239,6 +241,18 @@ export const LCARSHeader: React.FC<LCARSHeaderProps> = ({
                   Lv.{shipState.progression.level}
                 </span>
               )}
+            </button>
+          )}
+
+          {/* Printable / Exportable Starfleet Officer Science Certificate Button */}
+          {onOpenCommendation && (
+            <button
+              onClick={onOpenCommendation}
+              className="shrink-0 flex items-center gap-1 px-2 py-1.5 rounded text-xs font-medium transition-colors border bg-amber-500/15 text-amber-300 border-amber-400/50 hover:bg-amber-500/25 cursor-pointer"
+              title="View / Print Starfleet Officer Science Certificate & Mission Commendation Card"
+            >
+              <Award className="w-3.5 h-3.5 text-amber-400" />
+              <span className="hidden lg:inline font-trek uppercase tracking-wide">Certificate</span>
             </button>
           )}
 
@@ -459,6 +473,23 @@ export const LCARSHeader: React.FC<LCARSHeaderProps> = ({
               </div>
 
               <div className="flex flex-col gap-1 max-h-[70vh] overflow-y-auto py-1">
+                {/* Printable Science Certificate */}
+                {onOpenCommendation && (
+                  <button
+                    onClick={() => {
+                      onOpenCommendation();
+                      setIsToolsMenuOpen(false);
+                    }}
+                    className="flex items-center justify-between px-2.5 py-2 rounded text-left transition-colors bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/40 text-amber-300 font-bold"
+                  >
+                    <div className="flex items-center gap-2">
+                      <Award className="w-3.5 h-3.5 text-amber-400" />
+                      <span>View / Print Mission Commendation</span>
+                    </div>
+                    <span className="text-[10px] font-mono text-amber-300">CERT</span>
+                  </button>
+                )}
+
                 {/* Radar */}
                 {onToggleTacticalScanner && (
                   <button

@@ -41,6 +41,13 @@ export interface NotableIndividual {
   portraitUrl?: string;
 }
 
+export interface SpeciesGalleryImage {
+  url: string;
+  title: string;
+  caption: string;
+  tag?: string;
+}
+
 export interface StarTrekSpecies {
   id: string;
   name: string;
@@ -124,9 +131,10 @@ export interface StarTrekSpecies {
     bannerOrScene?: string; // Homeworld / iconic shot
     emblem?: string;
     caption: string;
+    gallery?: SpeciesGalleryImage[]; // Multi-image optical archive
   };
 
-  // Audio quote for LCARS voice synthesis
+  // Archival quote
   voiceBriefing?: {
     quote: string;
     speaker: string;

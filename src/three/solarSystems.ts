@@ -255,7 +255,7 @@ export function createPlanetBumpTexture(
   type: PlanetData['type'],
   planetId?: string
 ): THREE.CanvasTexture {
-  const cacheKey = `bump_${planetId || type}_v3`;
+  const cacheKey = `bump_${planetId || type}_v4`;
   if (bumpTextureCache.has(cacheKey)) {
     return bumpTextureCache.get(cacheKey)!;
   }
@@ -278,22 +278,54 @@ export function createPlanetBumpTexture(
     }
   } else {
     const seed = (planetId || type).split('').reduce((a, c) => a + c.charCodeAt(0), 0);
-    for (let i = 0; i < 360; i++) {
+    const isLunar = type === 'moon' || planetId === 'sol_moon' || planetId === 'sol_mercury';
+
+    if (isLunar) {
+      // Depressed basaltic maria basins in bump heightmap
+      for (let m = 0; m < 14; m++) {
+        const mx = fractHash(m * 3.1 + seed) * w;
+        const my = (0.18 + fractHash(m * 5.7 + seed) * 0.64) * h;
+        const mr = 45 + fractHash(m * 2.3 + seed) * 85;
+        const mg = ctx.createRadialGradient(mx, my, mr * 0.1, mx, my, mr);
+        mg.addColorStop(0, '#4a4a4a');
+        mg.addColorStop(0.75, '#5c5c5c');
+        mg.addColorStop(1, 'rgba(128,128,128,0)');
+        ctx.fillStyle = mg;
+        ctx.beginPath();
+        ctx.ellipse(mx, my, mr * 1.25, mr * 0.9, fractHash(m) * Math.PI, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+
+    const craterCount = isLunar ? 520 : 320;
+    for (let i = 0; i < craterCount; i++) {
       const rx = fractHash(i * 1.7 + seed) * w;
       const ry = fractHash(i * 2.9 + seed) * h;
-      const rr = 4 + fractHash(i * 4.3 + seed) * 32;
+      const rr = isLunar
+        ? 2 + Math.pow(fractHash(i * 4.3 + seed), 2.4) * 38
+        : 4 + fractHash(i * 4.3 + seed) * 32;
 
-      if (type === 'moon' || planetId === 'sol_mercury' || planetId === 'sol_mars') {
-        ctx.strokeStyle = '#d8d8d8';
-        ctx.lineWidth = 2.2;
+      if (isLunar || planetId === 'sol_mars') {
+        // Raised crater rim crest
+        ctx.strokeStyle = '#ececec';
+        ctx.lineWidth = Math.max(1.2, rr * 0.14);
         ctx.beginPath();
         ctx.arc(rx, ry, rr, 0, Math.PI * 2);
         ctx.stroke();
 
-        ctx.fillStyle = '#383838';
+        // Depressed crater bowl interior
+        ctx.fillStyle = '#2e2e2e';
         ctx.beginPath();
         ctx.arc(rx, ry, rr * 0.82, 0, Math.PI * 2);
         ctx.fill();
+
+        // Central rebound peak for larger complex craters
+        if (rr > 14) {
+          ctx.fillStyle = '#e2e2e2';
+          ctx.beginPath();
+          ctx.arc(rx, ry, rr * 0.16, 0, Math.PI * 2);
+          ctx.fill();
+        }
       } else {
         const g = ctx.createRadialGradient(rx, ry, 0, rx, ry, rr);
         g.addColorStop(0, i % 2 === 0 ? '#cccccc' : '#505050');
@@ -314,7 +346,10 @@ export function createPlanetBumpTexture(
   if (planetId && SOL_REAL_TEXTURE_PATHS[planetId]) {
     loadCachedImage(SOL_REAL_TEXTURE_PATHS[planetId], (img) => {
       ctx.save();
-      ctx.filter = 'grayscale(100%) contrast(145%)';
+      ctx.filter =
+        planetId === 'sol_moon'
+          ? 'grayscale(100%) contrast(175%) brightness(98%)'
+          : 'grayscale(100%) contrast(145%)';
       ctx.drawImage(img, 0, 0, w, h);
       ctx.restore();
       tex.needsUpdate = true;
@@ -325,11 +360,178 @@ export function createPlanetBumpTexture(
   return tex;
 }
 
+// Helper: Paints a photorealistic Lunar surface (matching user reference image `384add13b19d413d823b2b293bba3f1e_a45f0865.jpg`)
+// Features bright silver-ash anorthositic highlands, dark slate-charcoal basaltic maria basins,
+// multi-scale 3D-rimmed impact craters with central peaks, and bright radial ejecta ray systems.
+function paintPhotorealisticLunarSurface(
+  ctx: CanvasRenderingContext2D,
+  w: number,
+  h: number,
+  seed: number = 101,
+  isOverlayOnly: boolean = false
+) {
+  ctx.save();
+
+  if (!isOverlayOnly) {
+    // 1. Base Anorthositic Lunar Highland Regolith (Natural silver-ash to chalky grey gradient)
+    const baseGrad = ctx.createLinearGradient(0, 0, 0, h);
+    baseGrad.addColorStop(0.0, '#c4c8ce');
+    baseGrad.addColorStop(0.22, '#b2b6bd');
+    baseGrad.addColorStop(0.5, '#9ea3ab');
+    baseGrad.addColorStop(0.78, '#adb2b9');
+    baseGrad.addColorStop(1.0, '#bfc3ca');
+    ctx.fillStyle = baseGrad;
+    ctx.fillRect(0, 0, w, h);
+
+    // 2. Mottled Highland Regolith Albedo Variations
+    for (let i = 0; i < 220; i++) {
+      const hx = fractHash(i * 1.91 + seed) * w;
+      const hy = fractHash(i * 3.17 + seed) * h;
+      const hr = (18 + fractHash(i * 2.73 + seed) * 65) * (w / 1024);
+      const isLight = i % 2 === 0;
+      const g = ctx.createRadialGradient(hx, hy, 0, hx, hy, hr);
+      g.addColorStop(0, isLight ? 'rgba(235, 238, 242, 0.26)' : 'rgba(105, 110, 118, 0.24)');
+      g.addColorStop(1, 'rgba(160, 165, 172, 0)');
+      ctx.fillStyle = g;
+      ctx.beginPath();
+      ctx.arc(hx, hy, hr, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // 3. Dark Basaltic Lunar Maria Basins (Matching Mare Imbrium, Serenitatis, Tranquillitatis, Crisium, Procellarum)
+    const mariaBasins = [
+      { x: 0.36, y: 0.34, rx: 0.13, ry: 0.16, rot: -0.2, dark: '#3d4046' }, // Mare Imbrium
+      { x: 0.24, y: 0.48, rx: 0.16, ry: 0.22, rot: 0.15, dark: '#43464c' }, // Oceanus Procellarum
+      { x: 0.51, y: 0.36, rx: 0.085, ry: 0.11, rot: 0.1, dark: '#383b40' }, // Mare Serenitatis
+      { x: 0.57, y: 0.49, rx: 0.095, ry: 0.12, rot: -0.25, dark: '#3a3d43' }, // Mare Tranquillitatis
+      { x: 0.68, y: 0.39, rx: 0.055, ry: 0.075, rot: 0.05, dark: '#34373c' }, // Mare Crisium
+      { x: 0.63, y: 0.59, rx: 0.065, ry: 0.095, rot: 0.3, dark: '#40444a' }, // Mare Foecunditatis
+      { x: 0.41, y: 0.63, rx: 0.09, ry: 0.10, rot: -0.1, dark: '#45484f' }, // Mare Nubium
+      { x: 0.32, y: 0.61, rx: 0.065, ry: 0.08, rot: 0.2, dark: '#3e4147' }, // Mare Humorum
+      { x: 0.44, y: 0.20, rx: 0.11, ry: 0.045, rot: 0.0, dark: '#464a51' }, // Mare Frigoris
+    ];
+
+    for (let b = 0; b < mariaBasins.length; b++) {
+      const m = mariaBasins[b];
+      const cx = ((m.x + (seed === 101 ? 0 : fractHash(b + seed) * 0.35)) % 1.0) * w;
+      const cy = m.y * h;
+      const rx = m.rx * w;
+      const ry = m.ry * h;
+
+      for (let lobe = 0; lobe < 7; lobe++) {
+        const ang = (lobe / 7) * Math.PI * 2 + m.rot;
+        const dist = lobe === 0 ? 0 : 0.38 + fractHash(b * 7 + lobe + seed) * 0.28;
+        const lx = cx + Math.cos(ang) * rx * dist;
+        const ly = cy + Math.sin(ang) * ry * dist;
+        const lrx = rx * (lobe === 0 ? 0.95 : 0.62);
+        const lry = ry * (lobe === 0 ? 0.95 : 0.62);
+
+        const mGrad = ctx.createRadialGradient(lx, ly, lrx * 0.1, lx, ly, Math.max(lrx, lry));
+        mGrad.addColorStop(0, m.dark);
+        mGrad.addColorStop(0.68, '#484c52');
+        mGrad.addColorStop(1, 'rgba(72, 76, 82, 0)');
+        ctx.fillStyle = mGrad;
+        ctx.beginPath();
+        ctx.ellipse(lx, ly, lrx, lry, m.rot + lobe * 0.2, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+  }
+
+  // 4. Prominent Bright Radial Ejecta Ray Systems (Matching Tycho, Copernicus, Kepler & Highland Ray Craters)
+  const rayCenters = [
+    { x: 0.26, y: 0.27, rays: 26, len: 0.22, alpha: isOverlayOnly ? 0.22 : 0.38 }, // Upper-left highland ray system (as in reference image)
+    { x: 0.43, y: 0.77, rays: 32, len: 0.28, alpha: isOverlayOnly ? 0.20 : 0.36 }, // Southern Tycho ray system
+    { x: 0.35, y: 0.44, rays: 22, len: 0.16, alpha: isOverlayOnly ? 0.18 : 0.32 }, // Copernicus ray system
+    { x: 0.27, y: 0.47, rays: 18, len: 0.13, alpha: isOverlayOnly ? 0.16 : 0.28 }, // Kepler ray system
+  ];
+
+  for (let rc = 0; rc < rayCenters.length; rc++) {
+    const c = rayCenters[rc];
+    const rx = c.x * w;
+    const ry = c.y * h;
+    const maxLen = c.len * w;
+
+    for (let r = 0; r < c.rays; r++) {
+      const ang = (r / c.rays) * Math.PI * 2 + fractHash(rc * 19 + r) * 0.22;
+      const rayLen = maxLen * (0.45 + fractHash(rc * 31 + r * 3.7) * 0.65);
+      const ex = rx + Math.cos(ang) * rayLen;
+      const ey = ry + Math.sin(ang) * rayLen * 0.85;
+
+      const rGrad = ctx.createLinearGradient(rx, ry, ex, ey);
+      rGrad.addColorStop(0, `rgba(248, 250, 252, ${c.alpha})`);
+      rGrad.addColorStop(0.35, `rgba(226, 232, 240, ${(c.alpha * 0.55).toFixed(3)})`);
+      rGrad.addColorStop(1, 'rgba(226, 232, 240, 0)');
+
+      ctx.strokeStyle = rGrad;
+      ctx.lineWidth = (1.2 + fractHash(r * 5.1) * 2.2) * (w / 1024);
+      ctx.beginPath();
+      ctx.moveTo(rx, ry);
+      ctx.lineTo(ex, ey);
+      ctx.stroke();
+    }
+  }
+
+  // 5. Multi-Scale Crisp Rimmed Impact Craters (Dark shadowed floor + bright sunlit rim + central peak)
+  const scale = w / 1024;
+  const craterTotal = isOverlayOnly ? 260 : 540;
+  for (let i = 0; i < craterTotal; i++) {
+    const cx = fractHash(i * 2.17 + seed) * w;
+    const cy = (0.04 + fractHash(i * 3.83 + seed) * 0.92) * h;
+    const sizeDistribution = Math.pow(fractHash(i * 5.19 + seed), 2.8);
+    const r = (1.6 + sizeDistribution * 24) * scale;
+
+    const rimAlpha = isOverlayOnly ? 0.36 : 0.68;
+    const shadowAlpha = isOverlayOnly ? 0.32 : 0.62;
+
+    // Shadowed interior crater bowl
+    const bowlGrad = ctx.createRadialGradient(
+      cx - r * 0.18,
+      cy - r * 0.18,
+      r * 0.05,
+      cx,
+      cy,
+      r
+    );
+    bowlGrad.addColorStop(0, `rgba(38, 41, 46, ${shadowAlpha})`);
+    bowlGrad.addColorStop(0.72, `rgba(62, 66, 73, ${(shadowAlpha * 0.8).toFixed(2)})`);
+    bowlGrad.addColorStop(1, 'rgba(140, 145, 152, 0)');
+    ctx.fillStyle = bowlGrad;
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Crisp bright raised circular crater rim
+    ctx.strokeStyle = `rgba(236, 240, 245, ${rimAlpha})`;
+    ctx.lineWidth = Math.max(0.8 * scale, r * 0.13);
+    ctx.beginPath();
+    ctx.arc(cx, cy, r * 0.92, 0, Math.PI * 2);
+    ctx.stroke();
+
+    // Inner northwest shadow crescent for 3D depth
+    ctx.strokeStyle = `rgba(20, 22, 26, ${(shadowAlpha * 0.85).toFixed(2)})`;
+    ctx.lineWidth = Math.max(0.7 * scale, r * 0.11);
+    ctx.beginPath();
+    ctx.arc(cx, cy, r * 0.80, Math.PI * 0.85, Math.PI * 1.75);
+    ctx.stroke();
+
+    // Central rebound peak on larger complex craters
+    if (r > 9 * scale) {
+      ctx.fillStyle = `rgba(232, 236, 242, ${(rimAlpha * 0.9).toFixed(2)})`;
+      ctx.beginPath();
+      ctx.arc(cx, cy, Math.max(1.2 * scale, r * 0.14), 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+
+  ctx.restore();
+}
+
 /**
- * Applies the exact visual grading of the user's 3 attached reference images onto the real 2K planetary maps:
- * - `sol_moon` (`Moon.jpg`): Real 2K Lunar Reconnaissance Orbiter craters + deep crimson-iron maria borders & glowing cyan-teal highland/Tycho ejecta ray mineral highlights!
+ * Applies the exact visual grading of the user's attached reference images onto the real 2K planetary maps:
+ * - `sol_moon` (`384add13b19d413d823b2b293bba3f1e_a45f0865.jpg`): Photorealistic true-color Lunar Reconnaissance Orbiter mosaic with high-contrast dark basaltic maria (Mare Imbrium, Serenitatis, Tranquillitatis, Crisium, Procellarum), bright silver-ash cratered highlands, and crisp white radial ejecta rays!
  * - `sol_saturn` (`images.jpg`): Real 2K Saturn bands graded with cool slate-blue/cyan polar hemisphere transitioning into warm golden-amber and ochre equatorial cloud bands!
- * - `sol_earth` (`d5b91bd899844e49b99db646c2246203.jpeg`): Real 2K Earth Blue Marble enhanced with deep royal-navy oceans, turquoise coastal shelves, lush emerald lowlands, golden-tan desert plateaus (Sahara/Arabia/Tibet), snow-white Himalayan & polar caps, and delicate swirling white clouds!
+ * - `sol_earth` (`d5b91bd899844e49b99db646c2246203.jpeg`): Real 2K Earth Blue Marble enhanced with deep royal-navy oceans, turquoise coastal shelves, lush emerald lowlands, golden-tan desert plateaus, snow-white polar caps, and delicate swirling white clouds!
  */
 function compositeRealSolPlanetTexture(
   ctx: CanvasRenderingContext2D,
@@ -343,65 +545,14 @@ function compositeRealSolPlanetTexture(
   ctx.clearRect(0, 0, w, h);
 
   if (planetId === 'sol_moon') {
-    // === USER REFERENCE IMAGE 1 (`Moon.jpg`): MINERAL RED-IRON MARIA & CYAN-TEAL HIGHLAND EJECTA RAYS ===
-    // 1. Draw high-contrast darkened real 2K lunar crater & maria map as base
-    ctx.filter = 'contrast(155%) brightness(78%)';
+    // === USER REFERENCE IMAGE (`384add13b19d413d823b2b293bba3f1e_a45f0865.jpg`): PHOTOREALISTIC LUNAR SURFACE ===
+    // 1. Draw the real 2K NASA Lunar Reconnaissance Orbiter global map with crisp natural ash-grey contrast
+    ctx.filter = 'grayscale(100%) contrast(138%) brightness(104%)';
     ctx.drawImage(baseImg, 0, 0, w, h);
     ctx.filter = 'none';
 
-    // 2. Extract luminance & colorize maria borders in deep crimson-red and crater rays/highlands in glowing cyan-teal
-    const imgData = ctx.getImageData(0, 0, w, h);
-    const data = imgData.data;
-    for (let y = 0; y < h; y++) {
-      const ny = y / h;
-      for (let x = 0; x < w; x++) {
-        const idx = (y * w + x) * 4;
-        const lum = (data[idx] * 0.299 + data[idx + 1] * 0.587 + data[idx + 2] * 0.114) / 255;
-
-        // Spatial mineral modulation matching the red/cyan mineralogical Moon image
-        const mineralWave =
-          Math.sin((x / w) * Math.PI * 10 + Math.cos(ny * Math.PI * 6) * 1.5) * 0.5 +
-          Math.cos((x / w) * Math.PI * 18 - ny * Math.PI * 8) * 0.5;
-
-        let r: number;
-        let g: number;
-        let b: number;
-
-        if (lum < 0.34) {
-          // Dark basaltic Lunar Maria (Mare Imbrium, Serenitatis, Tranquillitatis) -> charcoal-obsidian with deep crimson-red borders
-          const t = lum / 0.34;
-          const redBorder = Math.pow(t, 1.8) * (0.55 + 0.45 * Math.max(0, mineralWave));
-          r = Math.round(14 + t * 55 + redBorder * 125);
-          g = Math.round(18 + t * 38);
-          b = Math.round(22 + t * 42);
-        } else if (lum < 0.62) {
-          // Transition zone between maria and cratered highlands -> rich crimson-rust & cyan-slate marbling
-          const t = (lum - 0.34) / 0.28;
-          if (mineralWave > 0.05) {
-            // Crimson-iron basaltic rim
-            r = Math.round(85 + (1 - Math.abs(t - 0.5) * 2) * 115 + t * 40);
-            g = Math.round(38 + t * 78);
-            b = Math.round(42 + t * 88);
-          } else {
-            // Cyan-teal titanium/anorthosite highland transition
-            r = Math.round(42 + t * 65);
-            g = Math.round(88 + t * 105);
-            b = Math.round(102 + t * 115);
-          }
-        } else {
-          // Bright craters, Tycho ejecta rays & southern highlands -> luminous cyan-teal & silver-white highlights
-          const t = (lum - 0.62) / 0.38;
-          r = Math.round(95 + t * 145);
-          g = Math.round(168 + t * 82);
-          b = Math.round(185 + t * 68);
-        }
-
-        data[idx] = Math.min(255, Math.max(0, r));
-        data[idx + 1] = Math.min(255, Math.max(0, g));
-        data[idx + 2] = Math.min(255, Math.max(0, b));
-      }
-    }
-    ctx.putImageData(imgData, 0, 0);
+    // 2. Overlay fine micro-crater rim sharpness and bright radial highland ejecta rays (GPU-accelerated 2D canvas ops)
+    paintPhotorealisticLunarSurface(ctx, w, h, 101, true);
 
   } else if (planetId === 'sol_saturn') {
     // === USER REFERENCE IMAGE 2 (`images.jpg`): COOL SLATE-BLUE / CERULEAN POLAR HEMISPHERE & WARM GOLDEN-AMBER EQUATORIAL BANDS ===
@@ -500,7 +651,7 @@ export function createPlanetTexture(
   baseColor: string,
   planetId?: string
 ): THREE.CanvasTexture {
-  const cacheKey = `${planetId || type}_${baseColor}_v3`;
+  const cacheKey = `${planetId || type}_${baseColor}_v4`;
   if (textureCache.has(cacheKey)) {
     return textureCache.get(cacheKey)!;
   }
@@ -589,22 +740,8 @@ export function createPlanetTexture(
     paintDetailedContinent(715, 168, 155, 78, '#0284c7', '#2e5a27', '#ddb892', '#ffffff', 83);
     paintDetailedContinent(845, 365, 62, 46, '#06b6d4', '#b07d4f', '#9c6644', '#fde68a', 113);
   } else if (planetId === 'sol_moon') {
-    // Immediate mineralogical red/cyan Moon fallback matching `Moon.jpg`
-    ctx.fillStyle = '#182229';
-    ctx.fillRect(0, 0, 1024, 512);
-    for (let m = 0; m < 18; m++) {
-      const mx = (110 + m * 115) % 1024;
-      const my = 110 + fractHash(m * 2.9) * 290;
-      const mr = 50 + fractHash(m * 5.7) * 70;
-      const mGrad = ctx.createRadialGradient(mx, my, mr * 0.15, mx, my, mr);
-      mGrad.addColorStop(0, '#0b1014');
-      mGrad.addColorStop(0.7, '#6b1d1d');
-      mGrad.addColorStop(1, 'rgba(34, 211, 238, 0.25)');
-      ctx.fillStyle = mGrad;
-      ctx.beginPath();
-      ctx.ellipse(mx, my, mr * 1.2, mr * 0.85, fractHash(m) * Math.PI, 0, Math.PI * 2);
-      ctx.fill();
-    }
+    // Immediate photorealistic Lunar surface matching user's Moon reference image
+    paintPhotorealisticLunarSurface(ctx, 1024, 512, 101, false);
   } else if (planetId === 'sol_saturn') {
     // Immediate slate-cyan to golden-amber Saturn fallback matching `images.jpg`
     const satGrad = ctx.createLinearGradient(0, 0, 0, 512);
@@ -842,20 +979,10 @@ export function createPlanetTexture(
       ctx.stroke();
     }
   } else {
-    ctx.fillStyle = baseColor || '#64748b';
-    ctx.fillRect(0, 0, 1024, 512);
-    for (let i = 0; i < 140; i++) {
-      const cx = fractHash(i * 4.1) * 1024;
-      const cy = 20 + fractHash(i * 6.3) * 472;
-      const r = 4 + fractHash(i * 2.9) * 18;
-      ctx.fillStyle = 'rgba(15, 23, 42, 0.45)';
-      ctx.beginPath();
-      ctx.arc(cx, cy, r, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.strokeStyle = 'rgba(226, 232, 240, 0.45)';
-      ctx.lineWidth = 1.3;
-      ctx.stroke();
-    }
+    const moonSeed = (planetId || baseColor || 'moon')
+      .split('')
+      .reduce((acc, ch) => acc + ch.charCodeAt(0), 101);
+    paintPhotorealisticLunarSurface(ctx, 1024, 512, moonSeed, false);
   }
 
   ctx.restore();
@@ -2803,8 +2930,11 @@ export interface UniversalCelestialBody {
   worldPosition: [number, number, number]; // Absolute universal coordinates
 }
 
+let _cachedUniversalBodies: UniversalCelestialBody[] | null = null;
+
 // Returns a flattened list of all known celestial objects in the galaxy with both local and universal world positions
 export function getAllUniversalCelestialBodies(): UniversalCelestialBody[] {
+  if (_cachedUniversalBodies) return _cachedUniversalBodies;
   const list: UniversalCelestialBody[] = [];
   for (const sys of STAR_TREK_SOLAR_SYSTEMS) {
     const [scx, scy, scz] = sys.centerCoordinates;
@@ -2846,6 +2976,7 @@ export function getAllUniversalCelestialBodies(): UniversalCelestialBody[] {
       });
     }
   }
+  _cachedUniversalBodies = list;
   return list;
 }
 

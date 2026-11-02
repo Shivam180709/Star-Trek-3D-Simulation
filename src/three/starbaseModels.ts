@@ -1162,6 +1162,18 @@ export function updateAllStarbaseAmbience(
   const forcefieldPulse = 0.45 + 0.15 * Math.sin(time * 4.5);
 
   for (const base of activeStarbases) {
+    // Skip per-frame animations for starbases in hidden solar systems
+    let parentObj: THREE.Object3D | null = base.root;
+    let isVisibleInScene = true;
+    while (parentObj) {
+      if (!parentObj.visible) {
+        isVisibleInScene = false;
+        break;
+      }
+      parentObj = parentObj.parent;
+    }
+    if (!isVisibleInScene) continue;
+
     if (camera && base.lod) {
       base.lod.update(camera);
     }

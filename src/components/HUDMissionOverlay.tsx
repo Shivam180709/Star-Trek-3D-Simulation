@@ -84,6 +84,7 @@ interface HUDMissionOverlayProps {
   }) => void;
   onProfileActivated: (profile: OfficerProfileRecord) => void;
   onProfileDisconnected: () => void;
+  onOpenCommendation?: () => void;
 }
 
 const ARCHETYPE_LABELS: Record<MissionArchetype, string> = {
@@ -133,6 +134,7 @@ export const HUDMissionOverlay: React.FC<HUDMissionOverlayProps> = ({
   onCompleteMission,
   onProfileActivated,
   onProfileDisconnected,
+  onOpenCommendation,
 }) => {
   const wp = shipState.missionWaypoint;
   const currentSystemId = shipState.currentSystemId || 'sol_system';
@@ -427,6 +429,18 @@ export const HUDMissionOverlay: React.FC<HUDMissionOverlayProps> = ({
                   <div className="text-emerald-300 font-bold">{missionsCompletedCount}</div>
                 </div>
               </div>
+              {onOpenCommendation && (
+                <button
+                  onClick={() => {
+                    onCloseOfficerPopover();
+                    onOpenCommendation();
+                  }}
+                  className="w-full py-2 px-3 rounded-lg bg-gradient-to-r from-amber-500 to-cyan-400 hover:from-amber-400 hover:to-cyan-300 text-slate-950 font-bold text-[10.5px] uppercase tracking-wider flex items-center justify-center gap-1.5 shadow-[0_0_15px_rgba(245,158,11,0.3)] cursor-pointer transition-all"
+                >
+                  <Award className="w-3.5 h-3.5" />
+                  <span>View / Print Mission Commendation</span>
+                </button>
+              )}
             </div>
           ) : (
             <div className="space-y-2">
@@ -501,6 +515,19 @@ export const HUDMissionOverlay: React.FC<HUDMissionOverlayProps> = ({
                     <span>Generate 6-Digit ID</span>
                   </button>
                 </div>
+              )}
+
+              {onOpenCommendation && (
+                <button
+                  onClick={() => {
+                    onCloseOfficerPopover();
+                    onOpenCommendation();
+                  }}
+                  className="w-full py-1.5 px-2.5 rounded bg-slate-900 hover:bg-slate-800 border border-amber-500/50 text-amber-300 font-bold text-[10px] uppercase tracking-wider flex items-center justify-center gap-1.5 cursor-pointer transition-colors"
+                >
+                  <Award className="w-3.5 h-3.5 text-amber-400" />
+                  <span>View / Print Mission Commendation</span>
+                </button>
               )}
             </div>
           )}
@@ -1807,14 +1834,25 @@ export const HUDMissionOverlay: React.FC<HUDMissionOverlayProps> = ({
             </span>
           </div>
 
-          <div className="flex items-center justify-between pt-1">
-            <button
-              onClick={onOpenOfficerPopover}
-              className="px-2.5 py-1 rounded bg-slate-900 hover:bg-slate-800 border border-amber-500/40 text-amber-300 text-[10px] uppercase font-bold flex items-center gap-1 cursor-pointer"
-            >
-              <KeyRound className="w-3 h-3" />
-              <span>{activeOfficerCode ? `Saved #${activeOfficerCode}` : 'Save 6-Digit ID'}</span>
-            </button>
+          <div className="flex flex-wrap items-center justify-between pt-1 gap-1.5">
+            <div className="flex items-center gap-1.5">
+              <button
+                onClick={onOpenOfficerPopover}
+                className="px-2.5 py-1 rounded bg-slate-900 hover:bg-slate-800 border border-amber-500/40 text-amber-300 text-[10px] uppercase font-bold flex items-center gap-1 cursor-pointer"
+              >
+                <KeyRound className="w-3 h-3" />
+                <span>{activeOfficerCode ? `ID #${activeOfficerCode}` : 'Save 6-Digit ID'}</span>
+              </button>
+              {onOpenCommendation && (
+                <button
+                  onClick={onOpenCommendation}
+                  className="px-2.5 py-1 rounded bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-[10px] uppercase tracking-wider flex items-center gap-1 shadow cursor-pointer"
+                >
+                  <Award className="w-3 h-3" />
+                  <span>View / Print Commendation</span>
+                </button>
+              )}
+            </div>
             <div className="flex items-center gap-1.5">
               <button
                 onClick={() => {

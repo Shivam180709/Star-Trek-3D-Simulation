@@ -1,9 +1,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { StarTrekSpecies, SpeciesCategory, GalacticQuadrant } from '../types/species';
+import { StarTrekSpecies, SpeciesCategory, SpeciesGalleryImage } from '../types/species';
 import { STAR_TREK_SPECIES, SPECIES_CATEGORIES } from '../data/speciesDatabase';
 import { LCARSSpeciesPortrait } from './LCARSSpeciesPortrait';
 import { soundEffects } from '../audio/soundEffects';
-import { computerVoice } from '../audio/computerVoice';
 import {
   X,
   Search,
@@ -13,18 +12,19 @@ import {
   Zap,
   Users,
   Compass,
-  Volume2,
   BookOpen,
   History,
   Crown,
   ChevronRight,
+  ChevronLeft,
   Navigation,
   ArrowUpDown,
-  Filter,
   CheckCircle,
-  AlertTriangle,
-  Info,
   Sparkles,
+  Camera,
+  Maximize2,
+  Quote,
+  Activity,
 } from 'lucide-react';
 
 interface SpeciesDatabaseModalProps {
@@ -34,13 +34,12 @@ interface SpeciesDatabaseModalProps {
   currentSystemId?: string;
 }
 
-type TabSection = 'overview' | 'culture' | 'history' | 'tech' | 'government' | 'individuals' | 'diplomacy';
+type TabSection = 'overview' | 'gallery' | 'culture' | 'history' | 'tech' | 'government' | 'individuals' | 'diplomacy';
 
 export const SpeciesDatabaseModal: React.FC<SpeciesDatabaseModalProps> = ({
   isOpen,
   onClose,
   onPlotCourseToSystem,
-  currentSystemId,
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<SpeciesCategory>('all');
@@ -49,70 +48,126 @@ export const SpeciesDatabaseModal: React.FC<SpeciesDatabaseModalProps> = ({
   const [selectedSpeciesId, setSelectedSpeciesId] = useState<string>(STAR_TREK_SPECIES[0].id);
   const [activeTab, setActiveTab] = useState<TabSection>('overview');
   const [mobileActiveView, setMobileActiveView] = useState<'list' | 'detail'>('list');
-
-  // Close on Escape key
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && isOpen) {
-        soundEffects.playLcarsBeep(650, 0.06);
-        onClose();
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, onClose]);
+  const [activeImageIndex, setActiveImageIndex] = useState<number>(0);
+  const [lightboxOpen, setLightboxOpen] = useState<boolean>(false);
 
   // Selected species object
   const selectedSpecies = useMemo(() => {
     return STAR_TREK_SPECIES.find((s) => s.id === selectedSpeciesId) || STAR_TREK_SPECIES[0];
   }, [selectedSpeciesId]);
 
+  // Build normalized gallery list for the active species
+  const speciesGallery: SpeciesGalleryImage[] = useMemo(() => {
+    if (selectedSpecies.images.gallery && selectedSpecies.images.gallery.length > 0) {
+      return selectedSpecies.images.gallery;
+    }
+    const items: SpeciesGalleryImage[] = [];
+    if (selectedSpecies.images.primary) {
+      items.push({
+        url: selectedSpecies.images.primary,
+        title: `${selectedSpecies.name} — Primary Visual Record`,
+        caption: selectedSpecies.images.caption,
+        tag: 'PRIMARY',
+      });
+    }
+    if (
+      selectedSpecies.images.bannerOrScene &&
+      selectedSpecies.images.bannerOrScene !== selectedSpecies.images.primary
+    ) {
+      items.push({
+        url: selectedSpecies.images.bannerOrScene,
+        title: `${selectedSpecies.homeworld.name} & Civilization Context`,
+        caption: `Archival reconnaissance imagery of ${selectedSpecies.name} civilization and ${selectedSpecies.homeworld.name}.`,
+        tag: 'ARCHIVE',
+      });
+    }
+    if (
+      selectedSpecies.images.fallback &&
+      selectedSpecies.images.fallback !== selectedSpecies.images.primary &&
+      selectedSpecies.images.fallback !== selectedSpecies.images.bannerOrScene
+    ) {
+      items.push({
+        url: selectedSpecies.images.fallback,
+        title: `${selectedSpecies.name} — Supplemental Record`,
+        caption: `Secondary exobiological visual reference for ${selectedSpecies.name}.`,
+        tag: 'SUPPLEMENTAL',
+      });
+    }
+    return items;
+  }, [selectedSpecies]);
+
+  // Reset gallery index when switching species
+  useEffect(() => {
+    setActiveImageIndex(0);
+    setLightboxOpen(false);
+  }, [selectedSpeciesId]);
+
+  // Close on Escape key
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (!isOpen) return;
+      if (e.key === 'Escape') {
+        soundEffects.playLcarsBeep(650, 0.06);
+        if (lightboxOpen) {
+          setLightboxOpen(false);
+        } else {
+          onClose();
+        }
+      } else if (lightboxOpen && speciesGallery.length > 1) {
+        if (e.key === 'ArrowRight') {
+          setActiveImageIndex((prev) => (prev + 1) % speciesGallery.length);
+        } else if (e.key === 'ArrowLeft') {
+          setActiveImageIndex((prev) => (prev - 1 + speciesGallery.length) % speciesGallery.length);
+        }
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose, lightboxOpen, speciesGallery.length]);
+
   // Filtered and sorted species list
   const filteredSpecies = useMemo(() => {
-    let result = STAR_TREK_SPECIES.filter((species) => {
-      // Category filter
+    const result = STAR_TREK_SPECIES.filter((species) => {
       if (selectedCategory !== 'all' && species.category !== selectedCategory) {
         return false;
       }
-
-      // Quadrant filter
       if (selectedQuadrant !== 'all' && species.quadrant !== selectedQuadrant) {
         return false;
       }
-
-      // Search query filter (matches name, nativeName, homeworld, traits, tags, notable individuals)
       if (searchQuery.trim()) {
         const q = searchQuery.toLowerCase().trim();
         const matchesName = species.name.toLowerCase().includes(q);
         const matchesNative = species.nativeName?.toLowerCase().includes(q);
-        const matchesHomeworld = species.homeworld.name.toLowerCase().includes(q) || species.homeworld.systemName.toLowerCase().includes(q);
+        const matchesHomeworld =
+          species.homeworld.name.toLowerCase().includes(q) ||
+          species.homeworld.systemName.toLowerCase().includes(q);
         const matchesAffiliation = species.affiliation.toLowerCase().includes(q);
         const matchesTags = species.tags.some((t) => t.toLowerCase().includes(q));
         const matchesIndividuals = species.notableIndividuals.some((i) => i.name.toLowerCase().includes(q));
-        const matchesBiology = species.physicalCharacteristics.distinctiveFeatures.some((f) => f.toLowerCase().includes(q));
+        const matchesBiology = species.physicalCharacteristics.distinctiveFeatures.some((f) =>
+          f.toLowerCase().includes(q)
+        );
 
-        if (!matchesName && !matchesNative && !matchesHomeworld && !matchesAffiliation && !matchesTags && !matchesIndividuals && !matchesBiology) {
+        if (
+          !matchesName &&
+          !matchesNative &&
+          !matchesHomeworld &&
+          !matchesAffiliation &&
+          !matchesTags &&
+          !matchesIndividuals &&
+          !matchesBiology
+        ) {
           return false;
         }
       }
-
       return true;
     });
 
-    // Sorting
     result.sort((a, b) => {
-      if (sortBy === 'popularity') {
-        return a.popularityRank - b.popularityRank;
-      }
-      if (sortBy === 'name') {
-        return a.name.localeCompare(b.name);
-      }
-      if (sortBy === 'quadrant') {
-        return a.quadrant.localeCompare(b.quadrant);
-      }
-      if (sortBy === 'affiliation') {
-        return a.affiliation.localeCompare(b.affiliation);
-      }
+      if (sortBy === 'popularity') return a.popularityRank - b.popularityRank;
+      if (sortBy === 'name') return a.name.localeCompare(b.name);
+      if (sortBy === 'quadrant') return a.quadrant.localeCompare(b.quadrant);
+      if (sortBy === 'affiliation') return a.affiliation.localeCompare(b.affiliation);
       return 0;
     });
 
@@ -121,22 +176,56 @@ export const SpeciesDatabaseModal: React.FC<SpeciesDatabaseModalProps> = ({
 
   if (!isOpen) return null;
 
-  // Speak species briefing through Ship Computer Voice
-  const handlePlayVoice = (species: StarTrekSpecies) => {
-    soundEffects.playLcarsBeep(980, 0.08);
-    const text =
-      species.voiceBriefing?.audioText ||
-      `Species record: ${species.name}. Homeworld: ${species.homeworld.name}. Affiliation: ${species.affiliation}.`;
-    
-    // Play sound effect and trigger vocal cue
-    soundEffects.playLcarsBeep(1200, 0.05);
-    computerVoice.testVoice();
+  // Dynamic accent theme based on species affiliation
+  const getAffiliationTheme = (affiliation: string) => {
+    switch (affiliation) {
+      case 'United Federation of Planets':
+        return {
+          accentText: 'text-sky-400',
+          accentBorder: 'border-sky-500/40',
+          accentBg: 'bg-sky-500/10',
+          barColor: 'bg-sky-400',
+          statusColor: 'text-sky-300',
+        };
+      case 'Klingon Empire':
+        return {
+          accentText: 'text-red-400',
+          accentBorder: 'border-red-500/40',
+          accentBg: 'bg-red-500/10',
+          barColor: 'bg-red-500',
+          statusColor: 'text-red-300',
+        };
+      case 'Romulan Star Empire':
+        return {
+          accentText: 'text-emerald-400',
+          accentBorder: 'border-emerald-500/40',
+          accentBg: 'bg-emerald-500/10',
+          barColor: 'bg-emerald-500',
+          statusColor: 'text-emerald-300',
+        };
+      case 'Borg Collective':
+        return {
+          accentText: 'text-green-400',
+          accentBorder: 'border-green-500/40',
+          accentBg: 'bg-green-500/10',
+          barColor: 'bg-green-500',
+          statusColor: 'text-green-300',
+        };
+      default:
+        return {
+          accentText: 'text-amber-400',
+          accentBorder: 'border-amber-500/40',
+          accentBg: 'bg-amber-500/10',
+          barColor: 'bg-amber-400',
+          statusColor: 'text-amber-300',
+        };
+    }
   };
 
-  // Check if homeworld can be plotted in current simulation
-  const hasPlotCourse = Boolean(
-    selectedSpecies.homeworld.systemId && onPlotCourseToSystem
-  );
+  const activeTheme = getAffiliationTheme(selectedSpecies.affiliation);
+  const currentGalleryItem = speciesGallery[activeImageIndex] || speciesGallery[0];
+
+  const hasPlotCourse = Boolean(selectedSpecies.homeworld.systemId && onPlotCourseToSystem);
 
   const handlePlotCourse = () => {
     if (selectedSpecies.homeworld.systemId && onPlotCourseToSystem) {
@@ -146,39 +235,56 @@ export const SpeciesDatabaseModal: React.FC<SpeciesDatabaseModalProps> = ({
     }
   };
 
+  const handleNextImage = () => {
+    if (speciesGallery.length <= 1) return;
+    soundEffects.playLcarsBeep(840, 0.04);
+    setActiveImageIndex((prev) => (prev + 1) % speciesGallery.length);
+  };
+
+  const handlePrevImage = () => {
+    if (speciesGallery.length <= 1) return;
+    soundEffects.playLcarsBeep(760, 0.04);
+    setActiveImageIndex((prev) => (prev - 1 + speciesGallery.length) % speciesGallery.length);
+  };
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-1 sm:p-2 md:p-3 bg-slate-950/90 backdrop-blur-md animate-fadeIn select-none overflow-hidden">
-      {/* Main LCARS Modal Container */}
-      <div className="relative w-full max-w-7xl h-[98dvh] sm:h-[95dvh] max-h-[98dvh] bg-slate-950 rounded-xl sm:rounded-2xl border-2 border-amber-500/50 shadow-2xl shadow-amber-950/50 flex flex-col overflow-hidden text-slate-100 font-sans">
+      {/* Main LCARS Exobiology Console Container */}
+      <div className="relative w-full max-w-[1440px] h-[98dvh] sm:h-[96dvh] bg-[#07090E] rounded-xl border border-slate-800 shadow-2xl flex flex-col overflow-hidden text-slate-100 font-sans">
         
         {/* ========================================================= */}
-        {/* TOP LCARS HEADER BANNER */}
+        {/* TOP TELEMETRY & COMMAND RIBBON */}
         {/* ========================================================= */}
-        <div className="flex items-stretch bg-slate-900 border-b border-amber-500/40 shrink-0">
-          {/* LCARS Elbow Graphic */}
-          <div className="w-16 sm:w-28 bg-amber-500 rounded-br-2xl flex items-center justify-center p-2 shrink-0">
-            <span className="text-xs sm:text-sm font-trek uppercase font-bold text-slate-950 tracking-wider">
-              LCARS 8412
+        <div className="flex items-stretch bg-slate-900/95 border-b border-slate-800 shrink-0">
+          {/* LCARS Archival Index Block */}
+          <div className="w-20 sm:w-32 bg-amber-500 flex flex-col justify-center px-3 py-2 shrink-0">
+            <span className="text-[10px] font-mono uppercase tracking-widest text-slate-950/80 font-bold leading-none">
+              ARCHIVE
+            </span>
+            <span className="text-xs sm:text-sm font-trek uppercase font-bold text-slate-950 tracking-wider mt-0.5">
+              EXO-8412
             </span>
           </div>
 
-          {/* Header Title Section */}
-          <div className="flex-1 flex items-center justify-between px-3 sm:px-6 py-2.5">
-            <div className="flex items-center gap-3">
-              <Dna className="w-5 h-5 text-amber-400 animate-pulse" />
-              <div>
-                <div className="flex items-center gap-2">
-                  <h2 className="text-sm sm:text-base font-trek uppercase font-bold text-amber-400 tracking-wider">
+          {/* Header Title & Calibration Telemetry */}
+          <div className="flex-1 flex items-center justify-between px-3 sm:px-5 py-2">
+            <div className="flex items-center gap-3 min-w-0">
+              <Dna className="w-5 h-5 text-amber-400 shrink-0" />
+              <div className="min-w-0">
+                <div className="flex items-center gap-3">
+                  <h2 className="text-sm sm:text-base font-trek uppercase font-bold text-slate-100 tracking-wider truncate">
                     Starfleet Exobiology & Civilization Database
                   </h2>
-                  <span className="hidden md:inline px-2 py-0.5 rounded bg-amber-500/20 border border-amber-500/40 text-[10px] font-mono-nums text-amber-300">
-                    ALPHA · BETA · GAMMA · DELTA QUADRANTS
+                  <span className="hidden xl:inline text-[11px] font-mono tabular-nums text-sky-400 border-l border-slate-700 pl-3">
+                    QUADRANT TELEMETRY: ALPHA · BETA · GAMMA · DELTA
                   </span>
                 </div>
-                <div className="text-[11px] text-slate-400 font-mono-nums flex items-center gap-2">
-                  <span>RECORD ARCHIVE: STARFLEET COMMAND</span>
+                <div className="text-[11px] text-slate-400 font-mono tabular-nums flex items-center gap-2">
+                  <span>STARFLEET SCIENCE DIVISION</span>
                   <span>·</span>
-                  <span>{STAR_TREK_SPECIES.length} CIVILIZATIONS CATALOGUED</span>
+                  <span>{STAR_TREK_SPECIES.length} SPECIES CATALOGUED</span>
+                  <span>·</span>
+                  <span className="text-emerald-400">● OPTICAL ARCHIVE ONLINE</span>
                 </div>
               </div>
             </div>
@@ -189,50 +295,75 @@ export const SpeciesDatabaseModal: React.FC<SpeciesDatabaseModalProps> = ({
                 soundEffects.playLcarsBeep(650, 0.05);
                 onClose();
               }}
-              className="p-1.5 sm:p-2 rounded-lg bg-slate-800 hover:bg-red-950/80 hover:text-red-300 text-slate-300 transition-colors border border-slate-700 hover:border-red-500/50 cursor-pointer"
+              className="px-2.5 py-1.5 rounded bg-slate-800/90 hover:bg-red-950/80 hover:text-red-300 text-slate-300 transition-colors border border-slate-700 hover:border-red-500/50 flex items-center gap-1.5 text-xs font-mono cursor-pointer shrink-0"
               title="Close Database [Esc]"
             >
-              <X className="w-5 h-5" />
+              <span className="hidden sm:inline text-[11px] uppercase tracking-wider">ESC</span>
+              <X className="w-4 h-4" />
             </button>
           </div>
         </div>
 
         {/* ========================================================= */}
-        {/* TOOLBAR: SEARCH, CATEGORIES & FILTERS */}
+        {/* FILTER & SEARCH CONTROL BAR */}
         {/* ========================================================= */}
-        <div className="bg-slate-900/90 border-b border-slate-800 p-2.5 sm:p-3 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-2.5 shrink-0">
-          {/* Search Input */}
-          <div className="relative flex-1 max-w-md">
-            <Search className="w-4 h-4 text-amber-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search species, homeworld, traits, figures..."
-              className="w-full pl-9 pr-8 py-1.5 bg-slate-950/90 border border-amber-500/30 rounded-lg text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-amber-400 focus:ring-1 focus:ring-amber-400 font-mono"
-            />
-            {searchQuery && (
-              <button
-                onClick={() => setSearchQuery('')}
-                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white"
-              >
-                <X className="w-3.5 h-3.5" />
-              </button>
-            )}
+        <div className="bg-slate-900/60 border-b border-slate-800 px-3 py-2 flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-2 shrink-0">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 flex-1">
+            {/* Search Input */}
+            <div className="relative flex-1 max-w-md">
+              <Search className="w-3.5 h-3.5 text-amber-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search species, homeworld, anatomy, figures..."
+                className="w-full pl-8 pr-7 py-1.5 bg-slate-950 border border-slate-800 rounded text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-amber-400 font-mono"
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery('')}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white cursor-pointer"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              )}
+            </div>
+
+            {/* Category Filter Strip */}
+            <div className="flex items-center gap-1 overflow-x-auto py-0.5">
+              {SPECIES_CATEGORIES.map((cat) => {
+                const isSelected = selectedCategory === cat.id;
+                return (
+                  <button
+                    key={cat.id}
+                    onClick={() => {
+                      soundEffects.playLcarsBeep(820, 0.04);
+                      setSelectedCategory(cat.id);
+                    }}
+                    className={`px-2.5 py-1 rounded text-[11px] font-trek uppercase whitespace-nowrap transition-colors border cursor-pointer ${
+                      isSelected
+                        ? 'bg-amber-500 text-slate-950 font-bold border-amber-400'
+                        : 'bg-slate-950 text-slate-400 border-slate-800 hover:bg-slate-800 hover:text-slate-200'
+                    }`}
+                  >
+                    {cat.label}
+                  </button>
+                );
+              })}
+            </div>
           </div>
 
-          {/* Quadrant & Sorting Selectors */}
-          <div className="flex items-center gap-2 overflow-x-auto pb-1 md:pb-0">
-            {/* Quadrant Filter */}
-            <div className="flex items-center gap-1 bg-slate-950 rounded-lg p-1 border border-slate-800 text-xs">
-              <Compass className="w-3.5 h-3.5 text-sky-400 ml-1" />
+          {/* Quadrant & Sort Controls */}
+          <div className="flex items-center gap-2 overflow-x-auto">
+            <div className="flex items-center gap-1.5 bg-slate-950 rounded px-2 py-1 border border-slate-800 text-xs">
+              <Compass className="w-3.5 h-3.5 text-sky-400 shrink-0" />
               <select
                 value={selectedQuadrant}
                 onChange={(e) => {
                   soundEffects.playLcarsBeep(880, 0.04);
                   setSelectedQuadrant(e.target.value);
                 }}
-                className="bg-transparent text-slate-300 font-mono text-[11px] pr-2 focus:outline-none cursor-pointer"
+                className="bg-transparent text-slate-300 font-mono text-[11px] focus:outline-none cursor-pointer"
               >
                 <option value="all" className="bg-slate-900 text-slate-200">All Quadrants</option>
                 <option value="Alpha Quadrant" className="bg-slate-900 text-slate-200">Alpha Quadrant</option>
@@ -243,63 +374,39 @@ export const SpeciesDatabaseModal: React.FC<SpeciesDatabaseModalProps> = ({
               </select>
             </div>
 
-            {/* Sort Dropdown */}
-            <div className="flex items-center gap-1 bg-slate-950 rounded-lg p-1 border border-slate-800 text-xs">
-              <ArrowUpDown className="w-3.5 h-3.5 text-amber-400 ml-1" />
+            <div className="flex items-center gap-1.5 bg-slate-950 rounded px-2 py-1 border border-slate-800 text-xs">
+              <ArrowUpDown className="w-3.5 h-3.5 text-amber-400 shrink-0" />
               <select
                 value={sortBy}
                 onChange={(e) => {
                   soundEffects.playLcarsBeep(880, 0.04);
                   setSortBy(e.target.value as any);
                 }}
-                className="bg-transparent text-slate-300 font-mono text-[11px] pr-2 focus:outline-none cursor-pointer"
+                className="bg-transparent text-slate-300 font-mono text-[11px] focus:outline-none cursor-pointer"
               >
-                <option value="popularity" className="bg-slate-900 text-slate-200">Sort: Popularity (Default)</option>
-                <option value="name" className="bg-slate-900 text-slate-200">Sort: Alphabetical (A-Z)</option>
+                <option value="popularity" className="bg-slate-900 text-slate-200">Sort: Priority Index</option>
+                <option value="name" className="bg-slate-900 text-slate-200">Sort: Name (A-Z)</option>
                 <option value="quadrant" className="bg-slate-900 text-slate-200">Sort: Quadrant</option>
                 <option value="affiliation" className="bg-slate-900 text-slate-200">Sort: Affiliation</option>
               </select>
             </div>
 
-            <span className="text-[10px] text-slate-400 font-mono-nums shrink-0 px-1">
-              Found: <strong className="text-amber-400">{filteredSpecies.length}</strong>
-            </span>
+            <div className="text-[11px] text-slate-400 font-mono tabular-nums shrink-0 pl-1">
+              RECORDS: <strong className="text-amber-400">{filteredSpecies.length}</strong>
+            </div>
           </div>
         </div>
 
-        {/* Category Pills Strip */}
-        <div className="bg-slate-950 border-b border-slate-800/80 px-3 py-2 flex items-center gap-1.5 overflow-x-auto shrink-0 scrollbar-none">
-          {SPECIES_CATEGORIES.map((cat) => {
-            const isSelected = selectedCategory === cat.id;
-            return (
-              <button
-                key={cat.id}
-                onClick={() => {
-                  soundEffects.playLcarsBeep(820, 0.04);
-                  setSelectedCategory(cat.id);
-                }}
-                className={`px-3 py-1 rounded-md text-xs font-trek uppercase font-medium whitespace-nowrap transition-colors border cursor-pointer ${
-                  isSelected
-                    ? 'bg-amber-500 text-slate-950 font-bold border-amber-400 shadow-sm shadow-amber-500/30'
-                    : 'bg-slate-900 text-slate-400 border-slate-800 hover:bg-slate-800 hover:text-slate-200'
-                }`}
-              >
-                {cat.label}
-              </button>
-            );
-          })}
-        </div>
-
-        {/* Mobile / Tablet LCARS View Switcher */}
+        {/* Mobile / Tablet View Switcher */}
         <div className="flex lg:hidden bg-slate-900 border-b border-slate-800 p-1.5 shrink-0 gap-1.5">
           <button
             onClick={() => {
               soundEffects.playLcarsBeep(800, 0.03);
               setMobileActiveView('list');
             }}
-            className={`flex-1 py-1.5 px-3 rounded-lg text-xs font-trek uppercase font-bold flex items-center justify-center gap-2 border transition-all cursor-pointer ${
+            className={`flex-1 py-1.5 px-3 rounded text-xs font-trek uppercase font-bold flex items-center justify-center gap-2 border transition-all cursor-pointer ${
               mobileActiveView === 'list'
-                ? 'bg-amber-500 text-slate-950 border-amber-400 font-extrabold shadow-sm'
+                ? 'bg-amber-500 text-slate-950 border-amber-400'
                 : 'bg-slate-950 text-slate-400 border-slate-800 hover:text-white'
             }`}
           >
@@ -311,9 +418,9 @@ export const SpeciesDatabaseModal: React.FC<SpeciesDatabaseModalProps> = ({
               soundEffects.playLcarsBeep(800, 0.03);
               setMobileActiveView('detail');
             }}
-            className={`flex-1 py-1.5 px-3 rounded-lg text-xs font-trek uppercase font-bold flex items-center justify-center gap-2 border transition-all cursor-pointer ${
+            className={`flex-1 py-1.5 px-3 rounded text-xs font-trek uppercase font-bold flex items-center justify-center gap-2 border transition-all cursor-pointer ${
               mobileActiveView === 'detail'
-                ? 'bg-amber-500 text-slate-950 border-amber-400 font-extrabold shadow-sm'
+                ? 'bg-amber-500 text-slate-950 border-amber-400'
                 : 'bg-slate-950 text-slate-400 border-slate-800 hover:text-white'
             }`}
           >
@@ -323,33 +430,38 @@ export const SpeciesDatabaseModal: React.FC<SpeciesDatabaseModalProps> = ({
         </div>
 
         {/* ========================================================= */}
-        {/* MAIN BODY: 2-COLUMN LCARS LAYOUT (EXPLORER LIST + DOSSIER) */}
+        {/* MAIN WORKSPACE: ASYMMETRIC SPLIT CONSOLE */}
         {/* ========================================================= */}
         <div className="flex-1 min-h-0 flex flex-col lg:flex-row overflow-hidden">
           
           {/* --------------------------------------------------------- */}
-          {/* LEFT COLUMN: SPECIES CARD GRID / LIST */}
+          {/* LEFT COLUMN: SPECIES DIRECTORY LIST (340px) */}
           {/* --------------------------------------------------------- */}
-          <div className={`w-full lg:w-80 xl:w-[380px] bg-slate-950 border-r border-slate-800 flex-col shrink-0 min-h-0 overflow-hidden ${
-            mobileActiveView === 'list' ? 'flex' : 'hidden lg:flex'
-          }`}>
-            {/* List Header */}
-            <div className="p-2.5 bg-slate-900/60 border-b border-slate-800 flex items-center justify-between text-xs font-mono text-slate-400 shrink-0">
-              <span className="font-trek uppercase tracking-wide text-slate-300">
-                Species Index ({filteredSpecies.length})
+          <div
+            className={`w-full lg:w-[330px] xl:w-[360px] bg-[#07090E] border-r border-slate-800 flex-col shrink-0 min-h-0 overflow-hidden ${
+              mobileActiveView === 'list' ? 'flex' : 'hidden lg:flex'
+            }`}
+          >
+            <div className="px-3 py-2 bg-slate-900/50 border-b border-slate-800 flex items-center justify-between text-[11px] font-mono text-slate-400 shrink-0">
+              <span className="uppercase tracking-wider text-slate-300 font-semibold">
+                CIVILIZATION INDEX
               </span>
-              <span>Sorted by Popularity</span>
+              <span className="tabular-nums">{filteredSpecies.length} ENTRIES</span>
             </div>
 
-            {/* Scrollable Species Card Items */}
-            <div className="flex-1 min-h-0 overflow-y-auto p-2 sm:p-2.5 space-y-2">
+            {/* Scrollable Species List with visible scrollbar */}
+            <div
+              className="flex-1 min-h-0 overflow-y-auto p-2 space-y-1.5"
+              style={{ scrollbarWidth: 'thin', scrollbarColor: '#475569 #0f172a' }}
+            >
               {filteredSpecies.length === 0 ? (
                 <div className="p-8 text-center text-slate-500 font-mono text-xs">
-                  No alien species matching "{searchQuery}". Try adjusting your filters.
+                  No civilization records match "{searchQuery}".
                 </div>
               ) : (
                 filteredSpecies.map((species) => {
                   const isSelected = species.id === selectedSpeciesId;
+                  const photoCount = species.images.gallery?.length || 1;
                   return (
                     <div
                       key={species.id}
@@ -358,72 +470,59 @@ export const SpeciesDatabaseModal: React.FC<SpeciesDatabaseModalProps> = ({
                         setSelectedSpeciesId(species.id);
                         setMobileActiveView('detail');
                       }}
-                      className={`p-2.5 rounded-xl border transition-all cursor-pointer flex items-center gap-3 relative group ${
+                      className={`p-2 rounded-lg border transition-all cursor-pointer flex items-center gap-3 relative group ${
                         isSelected
-                          ? 'bg-amber-500/15 border-amber-500/80 shadow-md shadow-amber-950/50'
-                          : 'bg-slate-900/60 border-slate-800/80 hover:bg-slate-900 hover:border-slate-700'
+                          ? 'bg-slate-900 border-amber-500/70'
+                          : 'bg-slate-900/35 border-slate-800/80 hover:bg-slate-900/70 hover:border-slate-700'
                       }`}
                     >
+                      {isSelected && (
+                        <div className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-amber-400 rounded-r" />
+                      )}
+
                       {/* Left Thumbnail */}
                       <div className="shrink-0">
                         <LCARSSpeciesPortrait species={species} size="sm" />
                       </div>
 
-                      {/* Info Overview */}
+                      {/* Metadata Summary */}
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between gap-1">
-                          <h4 className={`text-xs sm:text-sm font-trek uppercase font-bold truncate ${
-                            isSelected ? 'text-amber-400' : 'text-slate-100 group-hover:text-amber-300'
-                          }`}>
+                          <h4
+                            className={`text-xs sm:text-sm font-trek uppercase font-bold truncate ${
+                              isSelected ? 'text-amber-400' : 'text-slate-100 group-hover:text-amber-300'
+                            }`}
+                          >
                             {species.name}
                           </h4>
-                          <span className="text-[10px] font-mono-nums text-slate-500 shrink-0">
-                            #{species.popularityRank}
+                          <span className="text-[10px] font-mono tabular-nums text-slate-500 shrink-0">
+                            #{String(species.popularityRank).padStart(2, '0')}
                           </span>
                         </div>
 
-                        {species.nativeName && (
-                          <div className="text-[10px] text-slate-400 italic truncate font-sans">
-                            {species.nativeName}
-                          </div>
-                        )}
-
-                        <div className="text-[11px] text-slate-300 flex items-center gap-1 mt-0.5 truncate font-mono">
+                        <div className="text-[11px] text-slate-300 flex items-center gap-1.5 mt-0.5 truncate font-mono">
                           <Globe className="w-3 h-3 text-sky-400 shrink-0" />
                           <span className="truncate">{species.homeworld.name}</span>
                         </div>
 
-                        {/* Badges */}
-                        <div className="flex items-center gap-1.5 mt-1.5 overflow-hidden">
-                          <span className={`px-1.5 py-0.2 rounded text-[9px] font-trek uppercase font-semibold truncate ${
-                            species.affiliation === 'United Federation of Planets'
-                              ? 'bg-sky-950 text-sky-300 border border-sky-800'
-                              : species.affiliation === 'Klingon Empire'
-                              ? 'bg-red-950 text-red-300 border border-red-800'
-                              : species.affiliation === 'Romulan Star Empire'
-                              ? 'bg-emerald-950 text-emerald-300 border border-emerald-800'
-                              : species.affiliation === 'Borg Collective'
-                              ? 'bg-green-950 text-green-300 border border-green-800'
-                              : 'bg-slate-800 text-slate-300 border border-slate-700'
-                          }`}>
-                            {species.affiliation.split(' ')[0]}
+                        <div className="flex items-center justify-between gap-2 mt-1 text-[10px] font-mono text-slate-400">
+                          <span className="truncate text-slate-400">
+                            {species.affiliation}
                           </span>
-
-                          <span className="px-1.5 py-0.2 rounded bg-slate-950 text-slate-400 border border-slate-800 text-[9px] font-mono truncate">
-                            {species.quadrant.split(' ')[0]}
-                          </span>
+                          {photoCount > 1 && (
+                            <span className="shrink-0 flex items-center gap-1 text-sky-400 tabular-nums">
+                              <Camera className="w-2.5 h-2.5" />
+                              {photoCount}
+                            </span>
+                          )}
                         </div>
                       </div>
 
-                      {/* Right Chevron */}
-                      <ChevronRight className={`w-4 h-4 shrink-0 transition-transform ${
-                        isSelected ? 'text-amber-400 translate-x-1' : 'text-slate-600 group-hover:text-slate-400'
-                      }`} />
-
-                      {/* Active Left Indicator Bar */}
-                      {isSelected && (
-                        <div className="absolute left-0 top-2 bottom-2 w-1 bg-amber-400 rounded-r" />
-                      )}
+                      <ChevronRight
+                        className={`w-4 h-4 shrink-0 transition-transform ${
+                          isSelected ? 'text-amber-400 translate-x-0.5' : 'text-slate-600 group-hover:text-slate-400'
+                        }`}
+                      />
                     </div>
                   );
                 })
@@ -432,270 +531,533 @@ export const SpeciesDatabaseModal: React.FC<SpeciesDatabaseModalProps> = ({
           </div>
 
           {/* --------------------------------------------------------- */}
-          {/* RIGHT COLUMN: FULL DETAILED EXOBIOLOGY DOSSIER PANEL */}
+          {/* RIGHT COLUMN: EXOBIOLOGY DOSSIER & MULTI-IMAGE SHOWCASE */}
           {/* --------------------------------------------------------- */}
-          <div className={`flex-1 bg-slate-950 flex-col min-h-0 overflow-hidden ${
-            mobileActiveView === 'detail' ? 'flex' : 'hidden lg:flex'
-          }`}>
-            
-            {/* On small/medium screens: Quick Return Bar */}
-            <div className="lg:hidden flex items-center justify-between px-3 py-2 bg-slate-900/95 border-b border-slate-800 shrink-0">
+          <div
+            className={`flex-1 bg-[#07090E] flex-col min-h-0 overflow-hidden ${
+              mobileActiveView === 'detail' ? 'flex' : 'hidden lg:flex'
+            }`}
+          >
+            {/* Mobile Quick Return Bar */}
+            <div className="lg:hidden flex items-center justify-between px-3 py-2 bg-slate-900 border-b border-slate-800 shrink-0">
               <button
                 onClick={() => {
                   soundEffects.playLcarsBeep(700, 0.04);
                   setMobileActiveView('list');
                 }}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-trek uppercase font-bold shadow transition-colors cursor-pointer"
+                className="flex items-center gap-1.5 px-2.5 py-1 rounded bg-amber-500 text-slate-950 text-xs font-trek uppercase font-bold cursor-pointer"
               >
-                <ChevronRight className="w-3.5 h-3.5 rotate-180" />
-                <span>← Back to Species List</span>
+                <ChevronLeft className="w-3.5 h-3.5" />
+                <span>Index</span>
               </button>
-              <span className="text-[11px] font-mono text-slate-300">
-                Rank #{selectedSpecies.popularityRank} · {selectedSpecies.quadrant.split(' ')[0]}
+              <span className="text-[11px] font-mono tabular-nums text-slate-400">
+                RECORD #{String(selectedSpecies.popularityRank).padStart(2, '0')} · {selectedSpecies.quadrant}
               </span>
             </div>
 
-            {/* Dossier Top Banner */}
-            <div className="bg-slate-900/80 border-b border-slate-800 p-3 sm:p-4 flex flex-col md:flex-row items-start md:items-center justify-between gap-3 shrink-0">
-              <div className="flex items-start gap-3 sm:gap-4 flex-1 min-w-0">
-                <div className="shrink-0">
-                  <LCARSSpeciesPortrait
-                    species={selectedSpecies}
-                    size="md"
-                    onPlayVoiceBriefing={() => handlePlayVoice(selectedSpecies)}
-                  />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <h3 className="text-base sm:text-xl font-trek uppercase font-bold text-amber-400 truncate">
-                      {selectedSpecies.name}
-                    </h3>
-                    <span className="px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 text-[10px] sm:text-xs font-mono font-bold border border-slate-700">
-                      Rank #{selectedSpecies.popularityRank}
+            {/* ======================================================= */}
+            {/* DOSSIER HEADER & NAVIGATION TABS */}
+            {/* ======================================================= */}
+            <div className="bg-slate-900/70 border-b border-slate-800 px-4 sm:px-6 pt-3.5 pb-0 shrink-0">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 pb-3">
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2.5 flex-wrap">
+                    <span className="text-xs font-mono tabular-nums text-amber-400 font-semibold">
+                      FILE #{String(selectedSpecies.popularityRank).padStart(2, '0')}
                     </span>
-                    <span className="px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 text-[10px] sm:text-xs font-trek uppercase font-semibold border border-amber-500/40">
-                      {selectedSpecies.relationshipWithFederation.status}
+                    <span className="text-slate-700">|</span>
+                    <span className={`text-xs font-mono uppercase tracking-wider ${activeTheme.accentText}`}>
+                      {selectedSpecies.affiliation}
+                    </span>
+                    <span className="text-slate-700">|</span>
+                    <span className="text-xs font-mono text-slate-400">
+                      STATUS: <strong className="text-slate-200">{selectedSpecies.relationshipWithFederation.status.toUpperCase()}</strong>
                     </span>
                   </div>
 
-                  {selectedSpecies.nativeName && (
-                    <div className="text-xs text-slate-400 font-sans italic mt-0.5">
-                      Native Designation: <span className="text-slate-200">{selectedSpecies.nativeName}</span>
-                    </div>
-                  )}
+                  <div className="flex items-baseline gap-3 mt-1 flex-wrap">
+                    <h3 className="text-xl sm:text-2xl font-trek uppercase font-bold text-slate-100 tracking-wide">
+                      {selectedSpecies.name}
+                    </h3>
+                    {selectedSpecies.nativeName && (
+                      <span className="text-xs font-mono text-slate-400">
+                        [{selectedSpecies.nativeName}]
+                      </span>
+                    )}
+                  </div>
 
-                  <div className="text-xs text-slate-300 font-mono flex items-center gap-2 mt-1.5 flex-wrap">
+                  <div className="text-xs text-slate-400 font-mono flex items-center gap-2 mt-1 flex-wrap">
                     <span className="flex items-center gap-1 text-sky-400">
                       <Globe className="w-3.5 h-3.5" />
                       {selectedSpecies.homeworld.name} ({selectedSpecies.homeworld.systemName})
                     </span>
                     <span>·</span>
-                    <span className="text-amber-300">{selectedSpecies.quadrant}</span>
+                    <span>{selectedSpecies.quadrant}</span>
                     <span>·</span>
-                    <span className="text-slate-400">{selectedSpecies.affiliation}</span>
+                    <span>{selectedSpecies.homeworld.classification.split(' (')[0]}</span>
                   </div>
+                </div>
 
-                  {/* Vocal briefing quote */}
-                  {selectedSpecies.voiceBriefing && (
-                    <div className="mt-2 text-xs text-slate-400 italic flex items-center gap-2 bg-slate-950/70 px-2.5 py-1 rounded border border-slate-800 max-w-xl">
-                      <Volume2 className="w-3.5 h-3.5 text-sky-400 shrink-0" />
-                      <span className="truncate font-sans">
-                        "{selectedSpecies.voiceBriefing.quote}" — {selectedSpecies.voiceBriefing.speaker}
-                      </span>
-                    </div>
+                {/* Action Bar: Visual Gallery Count & Plot Course */}
+                <div className="flex items-center gap-2 shrink-0">
+                  <button
+                    onClick={() => {
+                      soundEffects.playLcarsBeep(820, 0.04);
+                      setActiveTab(activeTab === 'gallery' ? 'overview' : 'gallery');
+                    }}
+                    className={`px-3 py-1.5 rounded border text-xs font-trek uppercase font-bold flex items-center gap-1.5 transition-colors cursor-pointer ${
+                      activeTab === 'gallery'
+                        ? 'bg-sky-500 text-slate-950 border-sky-400'
+                        : 'bg-slate-950 text-sky-300 border-sky-500/40 hover:bg-sky-950/60'
+                    }`}
+                  >
+                    <Camera className="w-3.5 h-3.5" />
+                    <span>Optical Archive ({speciesGallery.length})</span>
+                  </button>
+
+                  {hasPlotCourse && (
+                    <button
+                      onClick={handlePlotCourse}
+                      className="px-3.5 py-1.5 rounded bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold border border-amber-300 flex items-center gap-1.5 text-xs transition-transform active:scale-95 cursor-pointer"
+                      title={`Plot Warp Course to ${selectedSpecies.homeworld.systemName}`}
+                    >
+                      <Navigation className="w-3.5 h-3.5 text-slate-950" />
+                      <span className="font-trek uppercase tracking-wider">Plot Course</span>
+                    </button>
                   )}
                 </div>
               </div>
 
-              {/* Action Buttons: Plot Course & Audio Briefing */}
-              <div className="flex items-center gap-2 self-stretch md:self-auto shrink-0 justify-end">
-                <button
-                  onClick={() => handlePlayVoice(selectedSpecies)}
-                  className="flex-1 md:flex-initial px-3 py-1.5 sm:py-2 rounded-lg bg-sky-950 hover:bg-sky-900 text-sky-300 border border-sky-600/50 flex items-center justify-center gap-1.5 text-xs font-medium transition-colors cursor-pointer"
-                  title="Play Vocal Species Briefing via Ship's Computer"
-                >
-                  <Volume2 className="w-3.5 h-3.5 text-sky-400" />
-                  <span className="font-trek uppercase tracking-wide">Audio Briefing</span>
-                </button>
-
-                {hasPlotCourse && (
-                  <button
-                    onClick={handlePlotCourse}
-                    className="flex-1 md:flex-initial px-3.5 py-1.5 sm:py-2 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold border border-amber-300 flex items-center justify-center gap-1.5 text-xs shadow-md shadow-amber-500/30 transition-transform active:scale-95 cursor-pointer"
-                    title={`Plot Warp Course to ${selectedSpecies.homeworld.systemName}`}
-                  >
-                    <Navigation className="w-3.5 h-3.5 text-slate-950" />
-                    <span className="font-trek uppercase tracking-wider">Plot Course</span>
-                  </button>
-                )}
+              {/* Navigation Tabs */}
+              <div className="flex items-center gap-1 sm:gap-2 overflow-x-auto scrollbar-none border-t border-slate-800/80 pt-1">
+                {[
+                  { id: 'overview', label: 'Dossier & Visuals', icon: Dna },
+                  { id: 'gallery', label: `Photo Archive (${speciesGallery.length})`, icon: Camera },
+                  { id: 'culture', label: 'Culture & Ethos', icon: BookOpen },
+                  { id: 'history', label: 'Historical Timeline', icon: History },
+                  { id: 'tech', label: 'Technology & Fleet', icon: Zap },
+                  { id: 'government', label: 'Governance', icon: Crown },
+                  { id: 'individuals', label: 'Notable Figures', icon: Users },
+                  { id: 'diplomacy', label: 'Diplomatic Relations', icon: Shield },
+                ].map((tab) => {
+                  const Icon = tab.icon;
+                  const isSelected = activeTab === tab.id;
+                  return (
+                    <button
+                      key={tab.id}
+                      onClick={() => {
+                        soundEffects.playLcarsBeep(780, 0.03);
+                        setActiveTab(tab.id as TabSection);
+                      }}
+                      className={`py-2 px-2.5 sm:px-3 border-b-2 text-[11px] sm:text-xs font-trek uppercase font-bold flex items-center gap-1.5 whitespace-nowrap transition-colors cursor-pointer ${
+                        isSelected
+                          ? 'border-amber-400 text-amber-400 bg-slate-950/50'
+                          : 'border-transparent text-slate-400 hover:text-slate-200 hover:border-slate-700'
+                      }`}
+                    >
+                      <Icon className="w-3.5 h-3.5" />
+                      <span>{tab.label}</span>
+                    </button>
+                  );
+                })}
               </div>
             </div>
 
-            {/* Dossier Navigation Tabs */}
-            <div className="bg-slate-900 border-b border-slate-800 px-2 sm:px-4 flex items-center gap-1 sm:gap-2 overflow-x-auto shrink-0 scrollbar-thin">
-              {[
-                { id: 'overview', label: 'Biology & Homeworld', icon: Dna },
-                { id: 'culture', label: 'Culture & Philosophy', icon: BookOpen },
-                { id: 'history', label: 'History & Epochs', icon: History },
-                { id: 'tech', label: 'Technology & Fleet', icon: Zap },
-                { id: 'government', label: 'Government', icon: Crown },
-                { id: 'individuals', label: 'Notable Individuals', icon: Users },
-                { id: 'diplomacy', label: 'Federation Relations', icon: Shield },
-              ].map((tab) => {
-                const Icon = tab.icon;
-                const isSelected = activeTab === tab.id;
-                return (
-                  <button
-                    key={tab.id}
-                    onClick={() => {
-                      soundEffects.playLcarsBeep(780, 0.03);
-                      setActiveTab(tab.id as TabSection);
-                    }}
-                    className={`py-2 px-2.5 sm:px-3 border-b-2 text-[11px] sm:text-xs font-trek uppercase font-bold flex items-center gap-1.5 whitespace-nowrap transition-colors cursor-pointer ${
-                      isSelected
-                        ? 'border-amber-400 text-amber-400 bg-slate-950/40'
-                        : 'border-transparent text-slate-400 hover:text-slate-200 hover:border-slate-700'
-                    }`}
-                  >
-                    <Icon className="w-3.5 h-3.5" />
-                    <span>{tab.label}</span>
-                  </button>
-                );
-              })}
-            </div>
-
-            {/* Scrollable Dossier Content Area */}
-            <div className="flex-1 min-h-0 overflow-y-auto p-3.5 sm:p-5 md:p-6 space-y-5">
-              
-              {/* TAB 1: OVERVIEW & BIOLOGY */}
+            {/* ======================================================= */}
+            {/* SCROLLABLE DOSSIER CONTENT AREA */}
+            {/* ======================================================= */}
+            <div
+              className="flex-1 min-h-0 overflow-y-auto p-4 sm:p-6 space-y-6"
+              style={{ scrollbarWidth: 'thin', scrollbarColor: '#475569 #0f172a' }}
+            >
+              {/* ------------------------------------------------------- */}
+              {/* TAB 1: OVERVIEW (HERO GALLERY + ANATOMY + HOMEWORLD) */}
+              {/* ------------------------------------------------------- */}
               {activeTab === 'overview' && (
                 <div className="space-y-6">
-                  {/* Physical Characteristics Grid */}
-                  <div>
-                    <h4 className="text-xs font-trek uppercase font-bold text-amber-400 tracking-wider mb-3 flex items-center gap-1.5">
-                      <Dna className="w-4 h-4" /> Physical Characteristics & Anatomy
-                    </h4>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
-                      <div className="p-3 bg-slate-900/80 rounded-xl border border-slate-800">
-                        <span className="text-[10px] text-slate-400 uppercase font-mono block">Average Height</span>
-                        <span className="text-xs font-mono font-bold text-slate-100">
-                          {selectedSpecies.physicalCharacteristics.averageHeight}
-                        </span>
+                  
+                  {/* TOP SPLIT: INTERACTIVE MULTI-PHOTO SHOWCASE + BIOMETRIC SUMMARY */}
+                  <div className="grid grid-cols-1 xl:grid-cols-12 gap-5 items-stretch">
+                    
+                    {/* Left 7 Cols: Interactive Optical Gallery Viewer */}
+                    <div className="xl:col-span-7 bg-slate-900/50 border border-slate-800 rounded-lg overflow-hidden flex flex-col">
+                      {/* Optical Viewer Header Bar */}
+                      <div className="px-3.5 py-2 bg-slate-900 border-b border-slate-800 flex items-center justify-between text-[11px] font-mono">
+                        <div className="flex items-center gap-2 text-sky-400">
+                          <Camera className="w-3.5 h-3.5" />
+                          <span className="uppercase tracking-wider font-semibold">
+                            OPTICAL RECORD {String(activeImageIndex + 1).padStart(2, '0')} / {String(speciesGallery.length).padStart(2, '0')}
+                          </span>
+                          {currentGalleryItem?.tag && (
+                            <span className="text-slate-400 border-l border-slate-700 pl-2">
+                              {currentGalleryItem.tag}
+                            </span>
+                          )}
+                        </div>
+
+                        <button
+                          onClick={() => {
+                            soundEffects.playLcarsBeep(860, 0.04);
+                            setLightboxOpen(true);
+                          }}
+                          className="text-slate-300 hover:text-amber-400 flex items-center gap-1 transition-colors cursor-pointer"
+                          title="Inspect Full-Resolution Photograph"
+                        >
+                          <Maximize2 className="w-3.5 h-3.5" />
+                          <span className="uppercase text-[10px]">Expand</span>
+                        </button>
                       </div>
-                      <div className="p-3 bg-slate-900/80 rounded-xl border border-slate-800">
-                        <span className="text-[10px] text-slate-400 uppercase font-mono block">Natural Lifespan</span>
-                        <span className="text-xs font-mono font-bold text-slate-100">
-                          {selectedSpecies.physicalCharacteristics.lifespan}
-                        </span>
+
+                      {/* Main Image Viewport */}
+                      <div className="relative h-64 sm:h-80 bg-slate-950 flex items-center justify-center overflow-hidden group">
+                        {currentGalleryItem ? (
+                          <img
+                            key={currentGalleryItem.url}
+                            src={currentGalleryItem.url}
+                            alt={currentGalleryItem.title}
+                            referrerPolicy="no-referrer"
+                            onClick={() => setLightboxOpen(true)}
+                            className="w-full h-full object-contain bg-slate-950 cursor-zoom-in transition-transform duration-300 group-hover:scale-[1.02]"
+                          />
+                        ) : (
+                          <LCARSSpeciesPortrait species={selectedSpecies} size="lg" />
+                        )}
+
+                        {/* Subtle Corner Reticles */}
+                        <div className="absolute top-2.5 left-2.5 w-3 h-3 border-t border-l border-sky-400/50 pointer-events-none" />
+                        <div className="absolute top-2.5 right-2.5 w-3 h-3 border-t border-r border-sky-400/50 pointer-events-none" />
+                        <div className="absolute bottom-2.5 left-2.5 w-3 h-3 border-b border-l border-sky-400/50 pointer-events-none" />
+                        <div className="absolute bottom-2.5 right-2.5 w-3 h-3 border-b border-r border-sky-400/50 pointer-events-none" />
+
+                        {/* Prev / Next Navigation Buttons when multiple images exist */}
+                        {speciesGallery.length > 1 && (
+                          <>
+                            <button
+                              onClick={handlePrevImage}
+                              className="absolute left-2.5 top-1/2 -translate-y-1/2 p-2 rounded bg-slate-950/85 hover:bg-amber-500 text-slate-200 hover:text-slate-950 border border-slate-700 transition-colors cursor-pointer"
+                              title="Previous Image"
+                            >
+                              <ChevronLeft className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={handleNextImage}
+                              className="absolute right-2.5 top-1/2 -translate-y-1/2 p-2 rounded bg-slate-950/85 hover:bg-amber-500 text-slate-200 hover:text-slate-950 border border-slate-700 transition-colors cursor-pointer"
+                              title="Next Image"
+                            >
+                              <ChevronRight className="w-4 h-4" />
+                            </button>
+                          </>
+                        )}
                       </div>
-                      <div className="p-3 bg-slate-900/80 rounded-xl border border-slate-800">
-                        <span className="text-[10px] text-slate-400 uppercase font-mono block">Blood Chemistry</span>
-                        <span className="text-xs font-mono font-bold text-emerald-400">
-                          {selectedSpecies.physicalCharacteristics.bloodChemistry}
-                        </span>
+
+                      {/* Active Image Caption & Filmstrip Thumbnails */}
+                      <div className="p-3.5 bg-slate-900/90 border-t border-slate-800 space-y-3">
+                        <div>
+                          <div className="text-xs font-trek uppercase font-bold text-amber-400">
+                            {currentGalleryItem?.title || selectedSpecies.name}
+                          </div>
+                          <p className="text-xs text-slate-300 mt-0.5 leading-relaxed">
+                            {currentGalleryItem?.caption || selectedSpecies.images.caption}
+                          </p>
+                        </div>
+
+                        {/* Multi-Image Thumbnail Strip */}
+                        {speciesGallery.length > 1 && (
+                          <div className="flex items-center gap-2 overflow-x-auto pb-1 pt-1">
+                            {speciesGallery.map((img, idx) => {
+                              const isCurrent = idx === activeImageIndex;
+                              return (
+                                <button
+                                  key={idx}
+                                  onClick={() => {
+                                    soundEffects.playLcarsBeep(800 + idx * 30, 0.03);
+                                    setActiveImageIndex(idx);
+                                  }}
+                                  className={`relative w-16 h-12 sm:w-20 sm:h-14 rounded overflow-hidden border transition-all shrink-0 cursor-pointer ${
+                                    isCurrent
+                                      ? 'border-amber-400 ring-1 ring-amber-400/60 opacity-100'
+                                      : 'border-slate-700 opacity-60 hover:opacity-100 hover:border-slate-500'
+                                  }`}
+                                  title={img.title}
+                                >
+                                  <img
+                                    src={img.url}
+                                    alt={img.title}
+                                    referrerPolicy="no-referrer"
+                                    className="w-full h-full object-cover object-top"
+                                  />
+                                  <span className="absolute bottom-0 right-0 px-1 bg-slate-950/90 text-[9px] font-mono tabular-nums text-slate-300">
+                                    {idx + 1}
+                                  </span>
+                                </button>
+                              );
+                            })}
+                          </div>
+                        )}
                       </div>
-                      <div className="p-3 bg-slate-900/80 rounded-xl border border-slate-800">
-                        <span className="text-[10px] text-slate-400 uppercase font-mono block">Physical Strength</span>
-                        <span className="text-xs font-mono font-bold text-amber-300">
-                          {selectedSpecies.physicalCharacteristics.physicalStrength}
-                        </span>
+                    </div>
+
+                    {/* Right 5 Cols: Biometric Scan & Key Physiological Telemetry */}
+                    <div className="xl:col-span-5 flex flex-col justify-between bg-slate-900/40 border border-slate-800 rounded-lg p-4 space-y-4">
+                      <div className="flex items-start justify-between gap-3 border-b border-slate-800 pb-3">
+                        <div>
+                          <span className="text-[10px] font-mono uppercase tracking-widest text-sky-400 block">
+                            BIOMETRIC & PHYSIOLOGICAL TELEMETRY
+                          </span>
+                          <h4 className="text-sm font-trek uppercase font-bold text-slate-100 mt-0.5">
+                            Anatomical Parameters
+                          </h4>
+                        </div>
+                        <LCARSSpeciesPortrait
+                          species={selectedSpecies}
+                          size="sm"
+                          customImageSrc={currentGalleryItem?.url}
+                        />
                       </div>
-                      <div className="p-3 bg-slate-900/80 rounded-xl border border-slate-800 sm:col-span-2">
-                        <span className="text-[10px] text-slate-400 uppercase font-mono block">Sensory Acuity</span>
-                        <span className="text-xs font-mono font-medium text-slate-200">
-                          {selectedSpecies.physicalCharacteristics.sensoryTraits || 'Standard humanoid range'}
-                        </span>
+
+                      {/* Key Biometric Readouts */}
+                      <div className="grid grid-cols-2 gap-2.5">
+                        <div className="p-2.5 bg-slate-950 rounded border border-slate-800/90">
+                          <span className="text-[10px] text-slate-400 uppercase font-mono block">
+                            Average Stature
+                          </span>
+                          <span className="text-xs sm:text-sm font-mono tabular-nums font-bold text-slate-100 mt-0.5 block">
+                            {selectedSpecies.physicalCharacteristics.averageHeight}
+                          </span>
+                        </div>
+
+                        <div className="p-2.5 bg-slate-950 rounded border border-slate-800/90">
+                          <span className="text-[10px] text-slate-400 uppercase font-mono block">
+                            Mean Lifespan
+                          </span>
+                          <span className="text-xs sm:text-sm font-mono tabular-nums font-bold text-slate-100 mt-0.5 block">
+                            {selectedSpecies.physicalCharacteristics.lifespan}
+                          </span>
+                        </div>
+
+                        <div className="p-2.5 bg-slate-950 rounded border border-slate-800/90 col-span-2">
+                          <span className="text-[10px] text-slate-400 uppercase font-mono block">
+                            Hematology / Blood Chemistry
+                          </span>
+                          <span className="text-xs font-mono font-bold text-emerald-400 mt-0.5 block">
+                            {selectedSpecies.physicalCharacteristics.bloodChemistry}
+                          </span>
+                        </div>
+
+                        <div className="p-2.5 bg-slate-950 rounded border border-slate-800/90 col-span-2">
+                          <span className="text-[10px] text-slate-400 uppercase font-mono block">
+                            Musculoskeletal Output
+                          </span>
+                          <span className="text-xs font-mono font-semibold text-amber-300 mt-0.5 block">
+                            {selectedSpecies.physicalCharacteristics.physicalStrength}
+                          </span>
+                        </div>
+
+                        <div className="p-2.5 bg-slate-950 rounded border border-slate-800/90 col-span-2">
+                          <span className="text-[10px] text-slate-400 uppercase font-mono block">
+                            Sensory Spectrum
+                          </span>
+                          <span className="text-xs font-mono text-slate-300 mt-0.5 block">
+                            {selectedSpecies.physicalCharacteristics.sensoryTraits || 'Standard humanoid baseline'}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Archival Quote Citation (replaces old Audio Briefing) */}
+                      {selectedSpecies.voiceBriefing && (
+                        <div className="p-3 bg-slate-950 border-l-2 border-amber-400 rounded-r text-xs space-y-1">
+                          <div className="flex items-center gap-1.5 text-[10px] font-mono uppercase tracking-wider text-amber-400">
+                            <Quote className="w-3 h-3" />
+                            <span>Archival Historical Citation</span>
+                          </div>
+                          <p className="text-slate-200 italic font-sans leading-relaxed">
+                            "{selectedSpecies.voiceBriefing.quote}"
+                          </p>
+                          <div className="text-[11px] font-mono text-slate-400">
+                            — {selectedSpecies.voiceBriefing.speaker}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* MORPHOLOGICAL FEATURES & EXOBIOLOGICAL NARRATIVE */}
+                  <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
+                    <div className="lg:col-span-5 p-4 bg-slate-900/40 rounded-lg border border-slate-800 space-y-3">
+                      <h4 className="text-xs font-trek uppercase font-bold text-sky-400 tracking-wider flex items-center gap-1.5">
+                        <Activity className="w-4 h-4" /> Distinctive Morphological Markers
+                      </h4>
+                      <ul className="space-y-2 text-xs text-slate-300">
+                        {selectedSpecies.physicalCharacteristics.distinctiveFeatures.map((feat, i) => (
+                          <li key={i} className="flex items-start gap-2.5">
+                            <span className="text-amber-400 font-mono font-bold">0{i + 1}</span>
+                            <span className="leading-relaxed">{feat}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+
+                    <div className="lg:col-span-7 p-4 bg-slate-900/40 rounded-lg border border-slate-800 space-y-3 flex flex-col justify-between">
+                      <div className="space-y-2">
+                        <h4 className="text-xs font-trek uppercase font-bold text-amber-400 tracking-wider flex items-center gap-1.5">
+                          <Dna className="w-4 h-4" /> Exobiological & Evolutionary Analysis
+                        </h4>
+                        <p className="text-xs sm:text-sm text-slate-200 leading-relaxed font-sans">
+                          {selectedSpecies.biology}
+                        </p>
+                      </div>
+
+                      <div className="p-3 bg-slate-950 rounded border border-sky-500/30 text-xs text-sky-200 flex items-start gap-2.5">
+                        <Sparkles className="w-4 h-4 text-sky-400 shrink-0 mt-0.5" />
+                        <div>
+                          <span className="text-[10px] font-mono uppercase tracking-wider text-sky-400 block">
+                            Specialized Physiological Adaptation
+                          </span>
+                          <span className="text-slate-200 mt-0.5 block leading-relaxed">
+                            {selectedSpecies.physicalCharacteristics.uniqueBiology}
+                          </span>
+                        </div>
                       </div>
                     </div>
                   </div>
 
-                  {/* Distinctive Morphological Features */}
-                  <div className="p-4 bg-slate-900/60 rounded-xl border border-slate-800">
-                    <span className="text-xs font-trek uppercase font-bold text-sky-400 block mb-2">
-                      Morphological & Anatomical Features
-                    </span>
-                    <ul className="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs text-slate-300">
-                      {selectedSpecies.physicalCharacteristics.distinctiveFeatures.map((feat, i) => (
-                        <li key={i} className="flex items-start gap-2">
-                          <span className="text-amber-400 font-bold">·</span>
-                          <span>{feat}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-
-                  {/* Biological Profile Narrative */}
-                  <div className="p-4 bg-slate-900/80 rounded-xl border border-slate-800 space-y-2">
-                    <h4 className="text-xs font-trek uppercase font-bold text-amber-400 tracking-wider">
-                      Exobiological Analysis
-                    </h4>
-                    <p className="text-xs sm:text-sm text-slate-200 leading-relaxed font-sans">
-                      {selectedSpecies.biology}
-                    </p>
-                    <div className="mt-3 p-3 bg-slate-950 rounded-lg border border-sky-500/30 text-xs text-sky-300 flex items-start gap-2">
-                      <Sparkles className="w-4 h-4 text-sky-400 shrink-0 mt-0.5" />
-                      <div>
-                        <strong className="text-sky-200 block font-trek uppercase">Unique Physiological Trait:</strong>
-                        <span>{selectedSpecies.physicalCharacteristics.uniqueBiology}</span>
-                      </div>
+                  {/* HOMEWORLD ASTROMETRIC PROFILE */}
+                  <div className="p-4 bg-slate-900/40 rounded-lg border border-slate-800 space-y-3">
+                    <div className="flex items-center justify-between flex-wrap gap-2">
+                      <h4 className="text-xs font-trek uppercase font-bold text-amber-400 tracking-wider flex items-center gap-1.5">
+                        <Globe className="w-4 h-4" /> Homeworld Planetary Telemetry
+                      </h4>
+                      {selectedSpecies.homeworld.coordinates && (
+                        <span className="text-[11px] font-mono tabular-nums text-slate-400">
+                          {selectedSpecies.homeworld.coordinates}
+                        </span>
+                      )}
                     </div>
-                  </div>
 
-                  {/* Homeworld Details Card */}
-                  <div className="p-4 bg-slate-900/80 rounded-xl border border-slate-800 space-y-3">
-                    <h4 className="text-xs font-trek uppercase font-bold text-amber-400 tracking-wider flex items-center gap-1.5">
-                      <Globe className="w-4 h-4" /> Homeworld Planetary Profile
-                    </h4>
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                      <div className="p-2.5 bg-slate-950 rounded border border-slate-800">
-                        <span className="text-[10px] text-slate-500 uppercase font-mono block">Planet Name</span>
-                        <span className="text-xs font-mono font-bold text-slate-100">{selectedSpecies.homeworld.name}</span>
+                      <div className="p-3 bg-slate-950 rounded border border-slate-800">
+                        <span className="text-[10px] text-slate-500 uppercase font-mono block">Primary World</span>
+                        <span className="text-xs sm:text-sm font-mono font-bold text-slate-100 mt-0.5 block">
+                          {selectedSpecies.homeworld.name}
+                        </span>
                       </div>
-                      <div className="p-2.5 bg-slate-950 rounded border border-slate-800">
+                      <div className="p-3 bg-slate-950 rounded border border-slate-800">
                         <span className="text-[10px] text-slate-500 uppercase font-mono block">Stellar System</span>
-                        <span className="text-xs font-mono font-bold text-sky-400">{selectedSpecies.homeworld.systemName}</span>
+                        <span className="text-xs sm:text-sm font-mono font-bold text-sky-400 mt-0.5 block">
+                          {selectedSpecies.homeworld.systemName}
+                        </span>
                       </div>
-                      <div className="p-2.5 bg-slate-950 rounded border border-slate-800">
+                      <div className="p-3 bg-slate-950 rounded border border-slate-800">
                         <span className="text-[10px] text-slate-500 uppercase font-mono block">Planetary Class</span>
-                        <span className="text-xs font-mono font-bold text-amber-300">{selectedSpecies.homeworld.classification}</span>
+                        <span className="text-xs sm:text-sm font-mono font-bold text-amber-300 mt-0.5 block">
+                          {selectedSpecies.homeworld.classification}
+                        </span>
                       </div>
                     </div>
-                    <div className="text-xs text-slate-300">
-                      <strong className="text-slate-400 block font-mono text-[10px] uppercase">Climate & Environment:</strong>
-                      <p className="mt-0.5">{selectedSpecies.homeworld.climate}</p>
-                    </div>
-                    <div className="text-xs text-slate-300">
-                      <strong className="text-slate-400 block font-mono text-[10px] uppercase">Astrometric Summary:</strong>
-                      <p className="mt-0.5">{selectedSpecies.homeworld.description}</p>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-1 text-xs text-slate-300">
+                      <div className="p-3 bg-slate-950/60 rounded border border-slate-800/80">
+                        <span className="text-slate-400 block font-mono text-[10px] uppercase">
+                          Biosphere & Climate
+                        </span>
+                        <p className="mt-1 leading-relaxed">{selectedSpecies.homeworld.climate}</p>
+                      </div>
+                      <div className="p-3 bg-slate-950/60 rounded border border-slate-800/80">
+                        <span className="text-slate-400 block font-mono text-[10px] uppercase">
+                          Planetary Overview
+                        </span>
+                        <p className="mt-1 leading-relaxed">{selectedSpecies.homeworld.description}</p>
+                      </div>
                     </div>
                   </div>
                 </div>
               )}
 
-              {/* TAB 2: CULTURE & PHILOSOPHY */}
+              {/* ------------------------------------------------------- */}
+              {/* TAB 2: DEDICATED MULTI-IMAGE PHOTO ARCHIVE GRID */}
+              {/* ------------------------------------------------------- */}
+              {activeTab === 'gallery' && (
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+                    <div>
+                      <h4 className="text-sm font-trek uppercase font-bold text-amber-400 tracking-wider flex items-center gap-2">
+                        <Camera className="w-4 h-4" /> Starfleet Optical Reconnaissance Archive — {selectedSpecies.name}
+                      </h4>
+                      <p className="text-xs text-slate-400 font-mono mt-0.5">
+                        Click any visual record below to inspect in high-resolution full-frame view.
+                      </p>
+                    </div>
+                    <span className="text-xs font-mono tabular-nums text-sky-400">
+                      {speciesGallery.length} RECORDS AVAILABLE
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                    {speciesGallery.map((img, idx) => (
+                      <div
+                        key={idx}
+                        onClick={() => {
+                          soundEffects.playLcarsBeep(860, 0.04);
+                          setActiveImageIndex(idx);
+                          setLightboxOpen(true);
+                        }}
+                        className="bg-slate-900/60 border border-slate-800 hover:border-amber-500/60 rounded-lg overflow-hidden flex flex-col cursor-pointer group transition-all"
+                      >
+                        <div className="relative h-52 bg-slate-950 overflow-hidden">
+                          <img
+                            src={img.url}
+                            alt={img.title}
+                            referrerPolicy="no-referrer"
+                            className="w-full h-full object-cover object-top transition-transform duration-300 group-hover:scale-105"
+                          />
+                          <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent" />
+                          <div className="absolute top-2 left-2 px-2 py-0.5 bg-slate-950/90 border border-slate-700 text-[10px] font-mono tabular-nums text-sky-400">
+                            REC #{String(idx + 1).padStart(2, '0')} {img.tag ? `· ${img.tag}` : ''}
+                          </div>
+                          <div className="absolute bottom-2 right-2 p-1.5 rounded bg-slate-950/85 border border-slate-700 text-slate-300 group-hover:text-amber-400">
+                            <Maximize2 className="w-3.5 h-3.5" />
+                          </div>
+                        </div>
+                        <div className="p-3.5 flex-1 flex flex-col justify-between space-y-1.5">
+                          <h5 className="text-xs sm:text-sm font-trek uppercase font-bold text-amber-400 group-hover:text-amber-300">
+                            {img.title}
+                          </h5>
+                          <p className="text-xs text-slate-300 leading-relaxed">
+                            {img.caption}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* ------------------------------------------------------- */}
+              {/* TAB 3: CULTURE & PHILOSOPHY */}
+              {/* ------------------------------------------------------- */}
               {activeTab === 'culture' && (
                 <div className="space-y-5">
-                  <div className="p-4 bg-slate-900/80 rounded-xl border border-slate-800 space-y-3">
+                  <div className="p-4 bg-slate-900/50 rounded-lg border border-slate-800 space-y-2.5">
                     <h4 className="text-xs font-trek uppercase font-bold text-amber-400 tracking-wider flex items-center gap-1.5">
-                      <BookOpen className="w-4 h-4" /> Cultural Traditions & Social Hierarchy
+                      <BookOpen className="w-4 h-4" /> Cultural Traditions & Social Structure
                     </h4>
                     <p className="text-xs sm:text-sm text-slate-200 leading-relaxed font-sans">
                       {selectedSpecies.culture}
                     </p>
                   </div>
 
-                  <div className="p-4 bg-amber-500/10 rounded-xl border border-amber-500/30 space-y-2">
+                  <div className="p-4 bg-slate-900/50 border-l-2 border-amber-400 rounded-r-lg border-y border-r border-slate-800 space-y-2">
                     <h4 className="text-xs font-trek uppercase font-bold text-amber-300 tracking-wider">
-                      Guiding Philosophy & Core Tenets
+                      Guiding Philosophy & Core Ethos
                     </h4>
-                    <p className="text-xs sm:text-sm text-amber-100 font-sans leading-relaxed">
+                    <p className="text-xs sm:text-sm text-slate-100 font-sans leading-relaxed">
                       {selectedSpecies.philosophy}
                     </p>
                   </div>
 
-                  <div className="p-4 bg-slate-900/80 rounded-xl border border-slate-800 space-y-2">
+                  <div className="p-4 bg-slate-900/50 rounded-lg border border-slate-800 space-y-2">
                     <h4 className="text-xs font-trek uppercase font-bold text-sky-400 tracking-wider">
-                      Linguistic Cadence & Dialects
+                      Xenolinguistic Cadence & Dialects
                     </h4>
                     <p className="text-xs sm:text-sm text-slate-300 font-mono">
                       {selectedSpecies.language}
@@ -704,7 +1066,9 @@ export const SpeciesDatabaseModal: React.FC<SpeciesDatabaseModalProps> = ({
                 </div>
               )}
 
-              {/* TAB 3: HISTORY & CHRONICLES */}
+              {/* ------------------------------------------------------- */}
+              {/* TAB 4: HISTORY & CHRONICLES */}
+              {/* ------------------------------------------------------- */}
               {activeTab === 'history' && (
                 <div className="space-y-4">
                   <h4 className="text-xs font-trek uppercase font-bold text-amber-400 tracking-wider flex items-center gap-1.5">
@@ -714,10 +1078,10 @@ export const SpeciesDatabaseModal: React.FC<SpeciesDatabaseModalProps> = ({
                     {selectedSpecies.history.map((epoch, idx) => (
                       <div
                         key={idx}
-                        className="p-3.5 bg-slate-900/80 rounded-xl border border-slate-800 flex items-start gap-3 hover:border-slate-700 transition-colors"
+                        className="p-3.5 bg-slate-900/50 rounded-lg border border-slate-800 flex items-start gap-3.5 hover:border-slate-700 transition-colors"
                       >
-                        <div className="w-6 h-6 rounded-full bg-amber-500/20 border border-amber-500/40 text-amber-400 flex items-center justify-center text-xs font-mono font-bold shrink-0 mt-0.5">
-                          {idx + 1}
+                        <div className="px-2 py-1 bg-slate-950 border border-amber-500/40 text-amber-400 text-xs font-mono tabular-nums font-bold shrink-0">
+                          {String(idx + 1).padStart(2, '0')}
                         </div>
                         <p className="text-xs sm:text-sm text-slate-200 leading-relaxed font-sans">
                           {epoch}
@@ -728,53 +1092,55 @@ export const SpeciesDatabaseModal: React.FC<SpeciesDatabaseModalProps> = ({
                 </div>
               )}
 
-              {/* TAB 4: TECHNOLOGY & STARSHIPS */}
+              {/* ------------------------------------------------------- */}
+              {/* TAB 5: TECHNOLOGY & STARSHIPS */}
+              {/* ------------------------------------------------------- */}
               {activeTab === 'tech' && (
                 <div className="space-y-5">
-                  <div className="p-4 bg-slate-900/80 rounded-xl border border-slate-800 space-y-3">
+                  <div className="p-4 bg-slate-900/50 rounded-lg border border-slate-800 space-y-3">
                     <h4 className="text-xs font-trek uppercase font-bold text-amber-400 tracking-wider flex items-center gap-1.5">
-                      <Zap className="w-4 h-4" /> Technological Capabilities & Propulsion
+                      <Zap className="w-4 h-4" /> Technological Assessment & Fleet Capabilities
                     </h4>
                     <p className="text-xs text-sky-300 font-mono">
                       {selectedSpecies.technologicalCapabilities.techLevelSummary}
                     </p>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-3">
-                      <div className="p-3 bg-slate-950 rounded-lg border border-slate-800">
-                        <span className="text-[10px] text-slate-400 uppercase font-mono block">Warp Speed Status</span>
-                        <span className="text-xs font-mono font-bold text-slate-100">
+                      <div className="p-3 bg-slate-950 rounded border border-slate-800">
+                        <span className="text-[10px] text-slate-400 uppercase font-mono block">Warp Propulsion</span>
+                        <span className="text-xs font-mono font-bold text-slate-100 mt-0.5 block">
                           {selectedSpecies.technologicalCapabilities.warpDriveStatus}
                         </span>
                       </div>
-                      <div className="p-3 bg-slate-950 rounded-lg border border-slate-800">
-                        <span className="text-[10px] text-slate-400 uppercase font-mono block">Propulsion Mechanics</span>
-                        <span className="text-xs font-mono font-bold text-slate-100">
+                      <div className="p-3 bg-slate-950 rounded border border-slate-800">
+                        <span className="text-[10px] text-slate-400 uppercase font-mono block">Reactor Architecture</span>
+                        <span className="text-xs font-mono font-bold text-slate-100 mt-0.5 block">
                           {selectedSpecies.technologicalCapabilities.propulsion}
                         </span>
                       </div>
-                      <div className="p-3 bg-slate-950 rounded-lg border border-slate-800">
-                        <span className="text-[10px] text-slate-400 uppercase font-mono block">Tactical Armaments</span>
-                        <span className="text-xs font-mono font-bold text-red-400">
+                      <div className="p-3 bg-slate-950 rounded border border-slate-800">
+                        <span className="text-[10px] text-slate-400 uppercase font-mono block">Primary Armaments</span>
+                        <span className="text-xs font-mono font-bold text-red-400 mt-0.5 block">
                           {selectedSpecies.technologicalCapabilities.weaponry}
                         </span>
                       </div>
-                      <div className="p-3 bg-slate-950 rounded-lg border border-slate-800">
-                        <span className="text-[10px] text-slate-400 uppercase font-mono block">Defensive Shielding</span>
-                        <span className="text-xs font-mono font-bold text-sky-400">
+                      <div className="p-3 bg-slate-950 rounded border border-slate-800">
+                        <span className="text-[10px] text-slate-400 uppercase font-mono block">Defensive Systems</span>
+                        <span className="text-xs font-mono font-bold text-sky-400 mt-0.5 block">
                           {selectedSpecies.technologicalCapabilities.defense}
                         </span>
                       </div>
                     </div>
                   </div>
 
-                  <div className="p-4 bg-slate-900/80 rounded-xl border border-slate-800">
-                    <span className="text-xs font-trek uppercase font-bold text-sky-400 block mb-2">
-                      Signature Innovations & Technologies
+                  <div className="p-4 bg-slate-900/50 rounded-lg border border-slate-800">
+                    <span className="text-xs font-trek uppercase font-bold text-sky-400 block mb-2.5">
+                      Signature Scientific & Tactical Innovations
                     </span>
-                    <ul className="space-y-1.5 text-xs text-slate-200">
+                    <ul className="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs text-slate-200">
                       {selectedSpecies.technologicalCapabilities.signatureTech.map((tech, idx) => (
-                        <li key={idx} className="flex items-center gap-2">
-                          <span className="w-1.5 h-1.5 rounded-full bg-amber-400 shrink-0" />
+                        <li key={idx} className="flex items-start gap-2 p-2 bg-slate-950/60 rounded border border-slate-800/80">
+                          <span className="text-amber-400 font-mono font-bold">·</span>
                           <span>{tech}</span>
                         </li>
                       ))}
@@ -783,35 +1149,37 @@ export const SpeciesDatabaseModal: React.FC<SpeciesDatabaseModalProps> = ({
                 </div>
               )}
 
-              {/* TAB 5: GOVERNMENT & POLITICS */}
+              {/* ------------------------------------------------------- */}
+              {/* TAB 6: GOVERNMENT & POLITICS */}
+              {/* ------------------------------------------------------- */}
               {activeTab === 'government' && (
                 <div className="space-y-5">
-                  <div className="p-4 bg-slate-900/80 rounded-xl border border-slate-800 space-y-3">
+                  <div className="p-4 bg-slate-900/50 rounded-lg border border-slate-800 space-y-3">
                     <h4 className="text-xs font-trek uppercase font-bold text-amber-400 tracking-wider flex items-center gap-1.5">
-                      <Crown className="w-4 h-4" /> State Entity & Governance
+                      <Crown className="w-4 h-4" /> Sovereign State & Political Structure
                     </h4>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      <div className="p-3 bg-slate-950 rounded-lg border border-slate-800">
-                        <span className="text-[10px] text-slate-400 uppercase font-mono block">Official State Title</span>
-                        <span className="text-xs font-mono font-bold text-slate-100">
+                      <div className="p-3 bg-slate-950 rounded border border-slate-800">
+                        <span className="text-[10px] text-slate-400 uppercase font-mono block">Official State Entity</span>
+                        <span className="text-xs font-mono font-bold text-slate-100 mt-0.5 block">
                           {selectedSpecies.government.name}
                         </span>
                       </div>
-                      <div className="p-3 bg-slate-950 rounded-lg border border-slate-800">
-                        <span className="text-[10px] text-slate-400 uppercase font-mono block">Governmental Structure</span>
-                        <span className="text-xs font-mono font-bold text-slate-100">
+                      <div className="p-3 bg-slate-950 rounded border border-slate-800">
+                        <span className="text-[10px] text-slate-400 uppercase font-mono block">Constitutional Form</span>
+                        <span className="text-xs font-mono font-bold text-slate-100 mt-0.5 block">
                           {selectedSpecies.government.structure}
                         </span>
                       </div>
-                      <div className="p-3 bg-slate-950 rounded-lg border border-slate-800">
-                        <span className="text-[10px] text-slate-400 uppercase font-mono block">Ruling Authority</span>
-                        <span className="text-xs font-mono font-bold text-amber-300">
+                      <div className="p-3 bg-slate-950 rounded border border-slate-800">
+                        <span className="text-[10px] text-slate-400 uppercase font-mono block">Executive / Ruling Body</span>
+                        <span className="text-xs font-mono font-bold text-amber-300 mt-0.5 block">
                           {selectedSpecies.government.rulingBody}
                         </span>
                       </div>
-                      <div className="p-3 bg-slate-950 rounded-lg border border-slate-800">
-                        <span className="text-[10px] text-slate-400 uppercase font-mono block">Seat of Power</span>
-                        <span className="text-xs font-mono font-bold text-sky-300">
+                      <div className="p-3 bg-slate-950 rounded border border-slate-800">
+                        <span className="text-[10px] text-slate-400 uppercase font-mono block">Capital / Seat of Power</span>
+                        <span className="text-xs font-mono font-bold text-sky-300 mt-0.5 block">
                           {selectedSpecies.government.seatOfPower}
                         </span>
                       </div>
@@ -820,23 +1188,25 @@ export const SpeciesDatabaseModal: React.FC<SpeciesDatabaseModalProps> = ({
                 </div>
               )}
 
-              {/* TAB 6: NOTABLE INDIVIDUALS */}
+              {/* ------------------------------------------------------- */}
+              {/* TAB 7: NOTABLE INDIVIDUALS */}
+              {/* ------------------------------------------------------- */}
               {activeTab === 'individuals' && (
                 <div className="space-y-4">
                   <h4 className="text-xs font-trek uppercase font-bold text-amber-400 tracking-wider flex items-center gap-1.5">
-                    <Users className="w-4 h-4" /> Legendary Historical & Contemporary Figures
+                    <Users className="w-4 h-4" /> Prominent Historical & Contemporary Figures
                   </h4>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
                     {selectedSpecies.notableIndividuals.map((person, idx) => (
                       <div
                         key={idx}
-                        className="p-4 bg-slate-900/80 rounded-xl border border-slate-800 hover:border-slate-700 transition-colors space-y-2"
+                        className="p-4 bg-slate-900/50 rounded-lg border border-slate-800 hover:border-slate-700 transition-colors space-y-2"
                       >
                         <div className="flex items-start justify-between gap-2">
                           <h5 className="text-sm font-trek uppercase font-bold text-amber-400">
                             {person.name}
                           </h5>
-                          <span className="text-[10px] font-mono text-slate-400 px-2 py-0.5 rounded bg-slate-950 border border-slate-800 shrink-0">
+                          <span className="text-[10px] font-mono text-slate-400 px-2 py-0.5 bg-slate-950 border border-slate-800 shrink-0">
                             {person.era.split(' (')[0]}
                           </span>
                         </div>
@@ -852,17 +1222,19 @@ export const SpeciesDatabaseModal: React.FC<SpeciesDatabaseModalProps> = ({
                 </div>
               )}
 
-              {/* TAB 7: FEDERATION RELATIONS */}
+              {/* ------------------------------------------------------- */}
+              {/* TAB 8: FEDERATION DIPLOMATIC RELATIONS */}
+              {/* ------------------------------------------------------- */}
               {activeTab === 'diplomacy' && (
                 <div className="space-y-5">
-                  <div className="p-4 bg-slate-900/80 rounded-xl border border-slate-800 space-y-3">
+                  <div className="p-4 bg-slate-900/50 rounded-lg border border-slate-800 space-y-3">
                     <h4 className="text-xs font-trek uppercase font-bold text-amber-400 tracking-wider flex items-center gap-1.5">
-                      <Shield className="w-4 h-4" /> Relationship with the United Federation of Planets
+                      <Shield className="w-4 h-4" /> Diplomatic Standing with the United Federation of Planets
                     </h4>
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs font-mono text-slate-400">Diplomatic Status:</span>
-                      <span className="px-2.5 py-1 rounded bg-amber-500/20 border border-amber-500/40 text-amber-300 text-xs font-trek uppercase font-bold">
-                        {selectedSpecies.relationshipWithFederation.status}
+                    <div className="flex items-center gap-2 text-xs font-mono">
+                      <span className="text-slate-400">CURRENT STATUS:</span>
+                      <span className="text-amber-300 font-bold uppercase">
+                        ● {selectedSpecies.relationshipWithFederation.status}
                       </span>
                     </div>
                     <p className="text-xs sm:text-sm text-slate-200 leading-relaxed font-sans">
@@ -870,11 +1242,11 @@ export const SpeciesDatabaseModal: React.FC<SpeciesDatabaseModalProps> = ({
                     </p>
                   </div>
 
-                  <div className="p-4 bg-slate-900/80 rounded-xl border border-slate-800">
-                    <span className="text-xs font-trek uppercase font-bold text-sky-400 block mb-2">
-                      Historic Treaties & Accords
+                  <div className="p-4 bg-slate-900/50 rounded-lg border border-slate-800">
+                    <span className="text-xs font-trek uppercase font-bold text-sky-400 block mb-2.5">
+                      Ratified Interstellar Treaties & Accords
                     </span>
-                    <ul className="space-y-1.5 text-xs text-slate-300">
+                    <ul className="space-y-2 text-xs text-slate-300">
                       {selectedSpecies.relationshipWithFederation.treaties.map((treaty, idx) => (
                         <li key={idx} className="flex items-center gap-2">
                           <CheckCircle className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
@@ -885,15 +1257,14 @@ export const SpeciesDatabaseModal: React.FC<SpeciesDatabaseModalProps> = ({
                   </div>
                 </div>
               )}
-
             </div>
 
             {/* Bottom Footer Telemetry */}
-            <div className="bg-slate-950 border-t border-slate-800 px-4 py-2 flex items-center justify-between text-[11px] font-mono text-slate-400 shrink-0">
+            <div className="bg-slate-900/90 border-t border-slate-800 px-4 py-2 flex items-center justify-between text-[11px] font-mono text-slate-400 shrink-0">
               <div className="flex items-center gap-2 truncate">
-                <span>LCARS ARCHIVE RECORD #{selectedSpecies.id.toUpperCase()}-1701</span>
+                <span>ARCHIVE RECORD #{selectedSpecies.id.toUpperCase()}-1701</span>
                 <span>·</span>
-                <span>SECURITY CLEARANCE: STARFLEET GENERAL ORDER 1</span>
+                <span>CLEARANCE: STARFLEET EXOBIOLOGY DIRECTIVE</span>
               </div>
               <button
                 onClick={() => {
@@ -905,11 +1276,104 @@ export const SpeciesDatabaseModal: React.FC<SpeciesDatabaseModalProps> = ({
                 Close Dossier
               </button>
             </div>
-
           </div>
-
         </div>
 
+        {/* ========================================================= */}
+        {/* FULL-FRAME OPTICAL ARCHIVE LIGHTBOX OVERLAY */}
+        {/* ========================================================= */}
+        {lightboxOpen && currentGalleryItem && (
+          <div
+            className="fixed inset-0 z-50 bg-slate-950/95 backdrop-blur-md flex flex-col items-center justify-center p-4 animate-fadeIn"
+            onClick={() => setLightboxOpen(false)}
+          >
+            <div
+              className="relative max-w-5xl w-full bg-slate-900 border border-slate-700 rounded-xl overflow-hidden shadow-2xl flex flex-col"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Lightbox Header */}
+              <div className="px-4 py-2.5 bg-slate-950 border-b border-slate-800 flex items-center justify-between">
+                <div className="flex items-center gap-2 text-xs font-mono">
+                  <span className="text-amber-400 font-bold uppercase">
+                    {selectedSpecies.name}
+                  </span>
+                  <span className="text-slate-600">|</span>
+                  <span className="text-sky-400 tabular-nums">
+                    IMAGE {String(activeImageIndex + 1).padStart(2, '0')} OF {String(speciesGallery.length).padStart(2, '0')}
+                  </span>
+                </div>
+                <button
+                  onClick={() => setLightboxOpen(false)}
+                  className="p-1 rounded bg-slate-800 hover:bg-red-950 text-slate-300 hover:text-red-300 border border-slate-700 cursor-pointer"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              {/* Lightbox Image Stage */}
+              <div className="relative h-[60dvh] sm:h-[68dvh] bg-slate-950 flex items-center justify-center p-2">
+                <img
+                  src={currentGalleryItem.url}
+                  alt={currentGalleryItem.title}
+                  referrerPolicy="no-referrer"
+                  className="max-w-full max-h-full object-contain"
+                />
+
+                {speciesGallery.length > 1 && (
+                  <>
+                    <button
+                      onClick={handlePrevImage}
+                      className="absolute left-4 top-1/2 -translate-y-1/2 p-2.5 rounded-lg bg-slate-900/90 hover:bg-amber-500 text-slate-200 hover:text-slate-950 border border-slate-700 transition-colors cursor-pointer"
+                    >
+                      <ChevronLeft className="w-5 h-5" />
+                    </button>
+                    <button
+                      onClick={handleNextImage}
+                      className="absolute right-4 top-1/2 -translate-y-1/2 p-2.5 rounded-lg bg-slate-900/90 hover:bg-amber-500 text-slate-200 hover:text-slate-950 border border-slate-700 transition-colors cursor-pointer"
+                    >
+                      <ChevronRight className="w-5 h-5" />
+                    </button>
+                  </>
+                )}
+              </div>
+
+              {/* Lightbox Caption & Thumbnails */}
+              <div className="p-4 bg-slate-950 border-t border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                  <h4 className="text-sm font-trek uppercase font-bold text-amber-400">
+                    {currentGalleryItem.title}
+                  </h4>
+                  <p className="text-xs text-slate-300 mt-0.5">
+                    {currentGalleryItem.caption}
+                  </p>
+                </div>
+
+                {speciesGallery.length > 1 && (
+                  <div className="flex items-center gap-1.5 shrink-0 overflow-x-auto">
+                    {speciesGallery.map((img, idx) => (
+                      <button
+                        key={idx}
+                        onClick={() => setActiveImageIndex(idx)}
+                        className={`w-12 h-9 rounded overflow-hidden border cursor-pointer transition-all ${
+                          idx === activeImageIndex
+                            ? 'border-amber-400 ring-1 ring-amber-400'
+                            : 'border-slate-700 opacity-50 hover:opacity-100'
+                        }`}
+                      >
+                        <img
+                          src={img.url}
+                          alt={img.title}
+                          referrerPolicy="no-referrer"
+                          className="w-full h-full object-cover object-top"
+                        />
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

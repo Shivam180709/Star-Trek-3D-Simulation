@@ -35,6 +35,7 @@ import { LCARSVoiceSettingsModal } from './components/LCARSVoiceSettingsModal';
 import { LCARSObjectDetailModal } from './components/LCARSObjectDetailModal';
 import { SpeciesDatabaseModal } from './components/SpeciesDatabaseModal';
 import { PlanetaryScannerModal } from './components/PlanetaryScannerModal';
+import { OfficerCommendationModal } from './components/OfficerCommendationModal';
 import {
   calculateMissionPerformanceReport,
   officerProfileStore,
@@ -105,6 +106,7 @@ export default function App() {
   const [isMissionWorkstationOpen, setIsMissionWorkstationOpen] = useState<boolean>(false);
   const [isMissionDebriefOpen, setIsMissionDebriefOpen] = useState<boolean>(false);
   const [isOfficerProfileOpen, setIsOfficerProfileOpen] = useState<boolean>(false);
+  const [isCommendationOpen, setIsCommendationOpen] = useState<boolean>(false);
   const [activeMission, setActiveMission] = useState<StarfleetMission | null>(null);
   const [lastMissionReport, setLastMissionReport] = useState<MissionPerformanceReport | null>(null);
   const [activeOfficerCode, setActiveOfficerCode] = useState<string | null>(null);
@@ -673,6 +675,7 @@ export default function App() {
         onOpenPlanetaryScanner={() => setIsPlanetaryScannerOpen(true)}
         onToggleMissions={() => setIsMissionCommandOpen((prev) => !prev)}
         onOpenOfficerProfile={() => setIsOfficerProfileOpen((prev) => !prev)}
+        onOpenCommendation={() => setIsCommendationOpen(true)}
         onToggleBridgeInterior={handleToggleBridgeInterior}
         isBridgeInteriorActive={currentView === 'interior_bridge'}
         isMissionsOpen={isMissionCommandOpen}
@@ -811,6 +814,7 @@ export default function App() {
         onCompleteMission={handleCompleteMission}
         onProfileActivated={handleProfileActivated}
         onProfileDisconnected={handleProfileDisconnected}
+        onOpenCommendation={() => setIsCommendationOpen(true)}
         recentLogs={logs}
         onOpenFullLog={() => setIsLogConsoleOpen(true)}
         isScannerOpen={isScannerOpen}
@@ -980,6 +984,17 @@ export default function App() {
         onClose={() => setIsSpeciesDbOpen(false)}
         onPlotCourseToSystem={(sysId) => handleSetCourse(sysId, undefined, 7.5)}
         currentSystemId={shipState?.currentSystemId}
+      />
+
+      {/* Printable / Exportable Starfleet Officer Science Certificate & Mission Commendation Modal */}
+      <OfficerCommendationModal
+        isOpen={isCommendationOpen}
+        onClose={() => setIsCommendationOpen(false)}
+        shipState={shipState}
+        activeOfficerCode={activeOfficerCode}
+        lastMissionReport={lastMissionReport}
+        missionsCompletedCount={missionsCompletedCount}
+        onProfileActivated={handleProfileActivated}
       />
 
       {/* Enterprise Catastrophic Destruction & Mission Restart Modal */}

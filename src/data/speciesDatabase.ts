@@ -108,10 +108,48 @@ export const STAR_TREK_SPECIES: StarTrekSpecies[] = [
       summary: 'Founding species and driving administrative and exploratory vanguard of the United Federation of Planets.',
     },
     images: {
-      primary: 'https://upload.wikimedia.org/wikipedia/commons/7/72/William_Shatner_Star_Trek.JPG',
-      fallback: 'https://upload.wikimedia.org/wikipedia/commons/thumb/8/87/William_Shatner_1975.jpg/500px-William_Shatner_1975.jpg',
-      bannerOrScene: 'https://upload.wikimedia.org/wikipedia/commons/thumb/0/05/Enterprise_NCC-1701.jpg/500px-Enterprise_NCC-1701.jpg',
+      primary: './assets/species/human_kirk.jpg',
+      fallback: './assets/species/human_uhura.jpg',
+      bannerOrScene: './assets/aistudio/d5b91bd899844e49b99db646c2246203_60c8b1e4.jpeg',
       caption: 'Captain James T. Kirk commanding on the Bridge of the USS Enterprise NCC-1701.',
+      gallery: [
+        {
+          url: './assets/species/human_kirk.jpg',
+          title: 'Captain James T. Kirk (Command Division)',
+          caption: 'Captain James T. Kirk aboard the USS Enterprise NCC-1701, exemplifying 23rd-century human deep-space exploration and command leadership.',
+          tag: 'COMMAND',
+        },
+        {
+          url: './assets/species/human_uhura.jpg',
+          title: 'Lt. Nyota Uhura (Subspace Communications)',
+          caption: 'Chief Communications Officer Lt. Uhura operating subspace frequency telemetry and universal xenolinguistic translation matrices.',
+          tag: 'OPERATIONS',
+        },
+        {
+          url: './assets/species/human_sulu.jpg',
+          title: 'Lt. Hikaru Sulu (Helm & Astrometrics)',
+          caption: 'Senior Helmsman Hikaru Sulu at the primary flight navigation console during interstellar warp transit.',
+          tag: 'NAVIGATION',
+        },
+        {
+          url: './assets/species/human_kirk_bridge.jpg',
+          title: 'Starfleet Inter-Species Bridge Command',
+          caption: 'Human and Vulcan officers collaborating on the USS Enterprise main bridge—a hallmark of United Earth and Federation cooperation.',
+          tag: 'ALLIANCE',
+        },
+        {
+          url: './assets/species/human_enterprise_cast.jpg',
+          title: 'Orbital Spaceflight & Starfleet Heritage',
+          caption: 'Archival record commemorating humanity’s progression from early atmospheric and orbital shuttles to deep-space starships.',
+          tag: 'HERITAGE',
+        },
+        {
+          url: './assets/aistudio/d5b91bd899844e49b99db646c2246203_60c8b1e4.jpeg',
+          title: 'Earth (Terra) — Sol System, Sector 001',
+          caption: 'Class-M terrestrial homeworld of humanity (71% hydrosphere), seat of the Federation Council and Starfleet Headquarters.',
+          tag: 'HOMEWORLD',
+        },
+      ],
     },
     voiceBriefing: {
       quote: 'Space: the final frontier. These are the voyages of the starship Enterprise...',
@@ -219,10 +257,42 @@ export const STAR_TREK_SPECIES: StarTrekSpecies[] = [
       summary: 'Formerly bitter Cold War adversaries; transformed into stalwart allies following the Khitomer Accords and the Dominion War.',
     },
     images: {
-      primary: 'https://upload.wikimedia.org/wikipedia/commons/e/e4/Klingon_%281305760507%29.jpg',
-      fallback: 'https://upload.wikimedia.org/wikipedia/commons/3/3c/Klingon_trekkie_armed.jpg',
-      bannerOrScene: 'https://upload.wikimedia.org/wikipedia/commons/8/8b/Klingon_Warrior_Costume_-_Star_Trek_-_The_Next_Generation_-_Star_Trek-_Exploring_New_Worlds_Exhibit_at_the_Henry_Ford_Museum%2C_Dearborn%2C_Michigan.jpg',
+      primary: './assets/species/klingon_warrior_portrait.jpg',
+      fallback: './assets/species/klingon_batleth_armed.jpg',
+      bannerOrScene: './assets/species/klingon_tng_armor.jpg',
       caption: 'Klingon warrior displaying distinctive sagittal cranial bone crests, dark beard, and battle armor.',
+      gallery: [
+        {
+          url: './assets/species/klingon_warrior_portrait.jpg',
+          title: 'Klingon Cranial Ridge Morphology',
+          caption: 'Close-range anatomical study showing pronounced sagittal bone crests (betleH ridges) and dense brow structure unique to each noble House.',
+          tag: 'ANATOMY',
+        },
+        {
+          url: './assets/species/klingon_batleth_armed.jpg',
+          title: 'Bat\'leth — The Sword of Honor',
+          caption: 'Klingon warrior in full combat stance wielding the curved double-pointed bat\'leth forged in the tradition of Kahless.',
+          tag: 'COMBAT',
+        },
+        {
+          url: './assets/species/klingon_tng_armor.jpg',
+          title: 'Imperial Defense Force Battle Armor',
+          caption: '24th-century Klingon warrior uniform featuring reinforced spine-braced leather cuirass, House baldric, and ceremonial greatcoat.',
+          tag: 'ARMOR',
+        },
+        {
+          url: './assets/species/klingon_weapons_arsenal.jpg',
+          title: 'Klingon Tactical Weapons & D\'k tahg Arsenal',
+          caption: 'Starfleet Intelligence exhibit of Klingon close-quarters blades (d\'k tahg and mek\'leth), disruptor sidearms, and cruiser geometry.',
+          tag: 'ORDNANCE',
+        },
+        {
+          url: './assets/species/klingon_battle_cruiser.jpg',
+          title: 'K\'t\'inga / D7 Class Imperial Battlecruiser',
+          caption: 'Primary frontline warship of the Klingon Defense Force featuring forward photon torpedo tube, cloaking system, and wing-mounted disruptors.',
+          tag: 'FLEET',
+        },
+      ],
     },
     voiceBriefing: {
       quote: 'Today is a good day to die! Qapla\'!',
@@ -330,10 +400,42 @@ export const STAR_TREK_SPECIES: StarTrekSpecies[] = [
       summary: 'Founding member, intellectual bedrock, and moral conscience of the United Federation of Planets.',
     },
     images: {
-      primary: 'https://upload.wikimedia.org/wikipedia/commons/f/fa/Leonard_Nimoy_as_Spock_1967.jpg',
-      fallback: 'https://upload.wikimedia.org/wikipedia/commons/thumb/e/e2/Spock_and_T%27Pring.jpg/500px-Spock_and_T%27Pring.jpg',
-      bannerOrScene: 'https://upload.wikimedia.org/wikipedia/commons/thumb/d/d3/Spock_and_parents_1968.jpg/960px-Spock_and_parents_1968.jpg',
+      primary: './assets/species/vulcan_spock_portrait.jpg',
+      fallback: './assets/species/vulcan_spock_science.jpg',
+      bannerOrScene: './assets/species/vulcan_sarek_amanda_spock.jpg',
       caption: 'First Officer Spock displaying canonical Vulcan pointed ears, arched eyebrows, and science uniform.',
+      gallery: [
+        {
+          url: './assets/species/vulcan_spock_portrait.jpg',
+          title: 'Commander Spock — Astrometric Sensor Analysis',
+          caption: 'First Officer Spock at the USS Enterprise science station, exhibiting canonical Vulcan pointed auricles and upward-swept eyebrows.',
+          tag: 'SCIENCE',
+        },
+        {
+          url: './assets/species/vulcan_sarek_amanda_spock.jpg',
+          title: 'Ambassador Sarek & Vulcan Diplomatic Delegation',
+          caption: 'Federation Ambassador Sarek of Vulcan in traditional ceremonial vestments alongside Commander Spock and Amanda Grayson.',
+          tag: 'DIPLOMACY',
+        },
+        {
+          url: './assets/species/vulcan_spock_science.jpg',
+          title: 'Vulcan Starfleet Science Division Dossier',
+          caption: 'Starfleet personnel record illustrating disciplined emotional mastery (Cthia) and scientific precision.',
+          tag: 'DOSSIER',
+        },
+        {
+          url: './assets/species/vulcan_spock_salute.jpg',
+          title: 'Empirical Field Observation',
+          caption: 'Vulcan science officer conducting logical evaluation in accordance with the teachings of the philosopher Surak.',
+          tag: 'LOGIC',
+        },
+        {
+          url: './assets/species/vulcan_officer_logic.jpg',
+          title: 'The Ta\'al — Traditional Vulcan Salute',
+          caption: 'The canonical parted-finger Vulcan greeting gesture accompanying the phrase "Live long and prosper" (Dif-tor heh smusma).',
+          tag: 'CULTURE',
+        },
+      ],
     },
     voiceBriefing: {
       quote: 'Live long and prosper. Logic is the foundation of functioning civilization.',

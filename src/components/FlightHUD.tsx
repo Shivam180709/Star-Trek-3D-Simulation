@@ -92,6 +92,7 @@ interface FlightHUDProps {
   }) => void;
   onProfileActivated?: (profile: OfficerProfileRecord) => void;
   onProfileDisconnected?: () => void;
+  onOpenCommendation?: () => void;
   recentLogs?: TacticalLogEvent[];
   onOpenFullLog?: () => void;
   isScannerOpen?: boolean;
@@ -150,6 +151,7 @@ export const FlightHUD: React.FC<FlightHUDProps> = ({
   onCompleteMission,
   onProfileActivated,
   onProfileDisconnected,
+  onOpenCommendation,
   recentLogs,
   onOpenFullLog,
   isScannerOpen = false,
@@ -251,6 +253,7 @@ export const FlightHUD: React.FC<FlightHUDProps> = ({
               onCompleteMission={onCompleteMission}
               onProfileActivated={onProfileActivated}
               onProfileDisconnected={onProfileDisconnected}
+              onOpenCommendation={onOpenCommendation}
             />
           )}
         {/* BLACK HOLE GRAVITATIONAL PULL & SINGULARITY TRANSIT BANNER */}
