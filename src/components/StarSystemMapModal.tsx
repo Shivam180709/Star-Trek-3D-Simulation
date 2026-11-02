@@ -52,15 +52,15 @@ type FilterType =
 type QuadrantFocus = 'all' | 'core' | 'frontiers';
 
 const SOL_PLANET_TEXTURES: Record<string, string> = {
-  sol_mercury: '/assets/planets/mercury.jpg',
-  sol_venus: '/assets/planets/venus.jpg',
-  sol_earth: '/assets/planets/earth.jpg',
-  sol_moon: '/assets/planets/moon.jpg',
-  sol_mars: '/assets/planets/mars.jpg',
-  sol_jupiter: '/assets/planets/jupiter.jpg',
-  sol_saturn: '/assets/planets/saturn.jpg',
-  sol_uranus: '/assets/planets/uranus.jpg',
-  sol_neptune: '/assets/planets/neptune.jpg',
+  sol_mercury: './assets/planets/mercury.jpg',
+  sol_venus: './assets/planets/venus.jpg',
+  sol_earth: './assets/planets/earth.jpg',
+  sol_moon: './assets/planets/moon.jpg',
+  sol_mars: './assets/planets/mars.jpg',
+  sol_jupiter: './assets/planets/jupiter.jpg',
+  sol_saturn: './assets/planets/saturn.jpg',
+  sol_uranus: './assets/planets/uranus.jpg',
+  sol_neptune: './assets/planets/neptune.jpg',
 };
 
 // Primary strategic Starfleet warp corridors (established interstellar lanes)

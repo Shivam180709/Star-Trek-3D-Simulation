@@ -15,15 +15,15 @@ function fractHash(n: number): number {
 
 // Map of Sol System bodies to downloaded real-life 2K NASA / Solar System Scope equirectangular textures
 const SOL_REAL_TEXTURE_PATHS: Record<string, string> = {
-  sol_mercury: '/assets/planets/mercury.jpg',
-  sol_venus: '/assets/planets/venus.jpg',
-  sol_earth: '/assets/planets/earth.jpg',
-  sol_moon: '/assets/planets/moon.jpg',
-  sol_mars: '/assets/planets/mars.jpg',
-  sol_jupiter: '/assets/planets/jupiter.jpg',
-  sol_saturn: '/assets/planets/saturn.jpg',
-  sol_uranus: '/assets/planets/uranus.jpg',
-  sol_neptune: '/assets/planets/neptune.jpg',
+  sol_mercury: './assets/planets/mercury.jpg',
+  sol_venus: './assets/planets/venus.jpg',
+  sol_earth: './assets/planets/earth.jpg',
+  sol_moon: './assets/planets/moon.jpg',
+  sol_mars: './assets/planets/mars.jpg',
+  sol_jupiter: './assets/planets/jupiter.jpg',
+  sol_saturn: './assets/planets/saturn.jpg',
+  sol_uranus: './assets/planets/uranus.jpg',
+  sol_neptune: './assets/planets/neptune.jpg',
 };
 
 const loadedImageCache = new Map<string, HTMLImageElement>();
@@ -131,8 +131,8 @@ export function createStarPhotosphereTexture(
   tex.generateMipmaps = true;
   tex.minFilter = THREE.LinearMipmapLinearFilter;
 
-  // Overlay real 2K Solar Photosphere image (/assets/planets/sun.jpg) tinted to the star's spectral class
-  loadCachedImage('/assets/planets/sun.jpg', (img) => {
+  // Overlay real 2K Solar Photosphere image (./assets/planets/sun.jpg) tinted to the star's spectral class
+  loadCachedImage('./assets/planets/sun.jpg', (img) => {
     ctx.save();
     ctx.drawImage(img, 0, 0, w, h);
     if (starColorHex !== 0xfef08a && starColorHex !== 0xfde047) {
@@ -453,8 +453,8 @@ function compositeRealSolPlanetTexture(
     ctx.drawImage(baseImg, 0, 0, w, h);
     ctx.filter = 'none';
 
-    // 2. Also composite the real 2K Earth Clouds map (`/assets/planets/earth_clouds.jpg`) using 'screen' blending
-    loadCachedImage('/assets/planets/earth_clouds.jpg', (cloudImg) => {
+    // 2. Also composite the real 2K Earth Clouds map (`./assets/planets/earth_clouds.jpg`) using 'screen' blending
+    loadCachedImage('./assets/planets/earth_clouds.jpg', (cloudImg) => {
       ctx.save();
       ctx.globalCompositeOperation = 'screen';
       ctx.globalAlpha = 0.42;
@@ -469,7 +469,7 @@ function compositeRealSolPlanetTexture(
     ctx.drawImage(baseImg, 0, 0, w, h);
     ctx.filter = 'none';
 
-    loadCachedImage('/assets/planets/venus_surface.jpg', (surfImg) => {
+    loadCachedImage('./assets/planets/venus_surface.jpg', (surfImg) => {
       ctx.save();
       ctx.globalCompositeOperation = 'overlay';
       ctx.globalAlpha = 0.25;

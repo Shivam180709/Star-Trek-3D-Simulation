@@ -1051,9 +1051,9 @@ export function buildSpaceEnvironment(scene: THREE.Scene): SpaceEnvironment {
         highDetailPlanetGroup.add(sphereHigh);
         animatedAnomalies.push({ mesh: sphereHigh, speed: isMoon ? 0.008 : 0.022, type: 'corona' });
 
-        // Dedicated 3D Atmospheric Cloud Layer for Earth (`/assets/planets/earth_clouds.jpg`)
+        // Dedicated 3D Atmospheric Cloud Layer for Earth (`./assets/planets/earth_clouds.jpg`)
         if (planet.id === 'sol_earth') {
-          const cloudTex = new THREE.TextureLoader().load('/assets/planets/earth_clouds.jpg');
+          const cloudTex = new THREE.TextureLoader().load('./assets/planets/earth_clouds.jpg');
           cloudTex.colorSpace = THREE.SRGBColorSpace;
           cloudTex.wrapS = THREE.RepeatWrapping;
           cloudTex.wrapT = THREE.ClampToEdgeWrapping;

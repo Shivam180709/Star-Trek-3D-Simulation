@@ -140,6 +140,10 @@ class CustomAudioBank {
         // Try 1-digit first (since user created 1.mp3, 2.mp3...), then 2-digit format
         const urlsToTry = Array.from(
           new Set([
+            `./audio/${numStr1}`,
+            `./audio/${phrase.number}.mp3`,
+            `./audio/${numStr2}`,
+            `./audio/${phrase.number < 10 ? '0' + phrase.number : phrase.number}.mp3`,
             `/audio/${numStr1}`,
             `/audio/${phrase.number}.mp3`,
             `/audio/${numStr2}`,

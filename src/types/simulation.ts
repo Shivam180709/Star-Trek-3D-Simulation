@@ -204,6 +204,7 @@ export interface ShipState {
   phaserEnergy: number;        // 0 to 100%
   
   // Navigation & Solar Systems
+  stardate?: string;
   currentSystemId: string;
   currentSystemName: string;
   selectedTargetId: string | null;
